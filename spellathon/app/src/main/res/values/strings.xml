@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Spellathon</string>
+    <string name="input_word">Input Word</string>
 </resources>
