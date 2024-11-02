@@ -21,11 +21,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -86,7 +88,8 @@ fun SpellathonLayoutMain(modifier: Modifier = Modifier) {
 
 @Composable
 fun SpellathonLayout(modifier: Modifier = Modifier) {
-    val inputwords = remember { mutableStateListOf<String>() }
+    val inputwords = remember { mutableStateListOf<WordItem>() }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -111,7 +114,7 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
             InputWordSection(inputwords = inputwords)
         }
         Row(modifier = modifier) {
-            displayInputWords(modifier, inputwords = inputwords)
+            displayInputWords(modifier, wordItems = inputwords)
         }
     }
 }
@@ -160,8 +163,9 @@ private fun ImageSection(modifier: Modifier) {
 }
 
 @Composable
-fun InputWordSection(modifier: Modifier = Modifier, inputwords: SnapshotStateList<String>) {
+fun InputWordSection(modifier: Modifier = Modifier, inputwords: SnapshotStateList<WordItem>) {
     var word by remember { mutableStateOf("") }
+    var idCounter by remember { mutableStateOf(0) }
 
     Column(
         modifier = Modifier,
@@ -189,8 +193,9 @@ fun InputWordSection(modifier: Modifier = Modifier, inputwords: SnapshotStateLis
             if (word.length == 0) {
                 println("ignoring empty word")
             } else {
-                println("input word $word")
-                inputwords.add(word)
+                idCounter++
+                println("input word $word with id $idCounter")
+                inputwords.add(WordItem(idCounter, word))
                 word = ""
             }
         }) {
@@ -203,19 +208,48 @@ fun InputWordSection(modifier: Modifier = Modifier, inputwords: SnapshotStateLis
 @Composable
 private fun displayInputWords(
     modifier: Modifier = Modifier,
-    inputwords: SnapshotStateList<String>
+    wordItems: SnapshotStateList<WordItem>,
 ) {
-    inputwords.add("ARROW")
-    inputwords.add("ARROW")
-    inputwords.add("ARROW")
-    inputwords.add("ARROW")
-    inputwords.add("ARROW")
-    LazyColumn(modifier = Modifier.padding(top = 5.dp)) {
-        items(inputwords) { item ->
-            Text(item)
+
+    // uncomment below line for testing layout in preview
+    for (i in 1..30) {
+        wordItems.add(WordItem(i, "ARROW" + i))
+    }
+
+    LazyColumn(modifier = Modifier.padding(top = 10.dp)) {
+        items(wordItems) { item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                ) {
+                Text(modifier = Modifier
+                    .padding(start = 10.dp)
+                    .weight(0.5f)
+                    , text = item.text)
+                IconButton(
+                    modifier = Modifier
+                        .weight(0.5f)
+                        .wrapContentWidth(Alignment.Start),
+                    onClick = {
+                        println("deleting word ${item.text} with id ${item.id}")
+                        wordItems.remove(item)
+                    }) {
+                    Icon(
+                        painter = painterResource(R.drawable.delete),
+                        contentDescription = "delete",
+                    )
+                }
+            }
         }
     }
 }
+
+data class WordItem (
+    val id: Int,
+    val text: String
+)
 
 
 @Preview(showBackground = true)
