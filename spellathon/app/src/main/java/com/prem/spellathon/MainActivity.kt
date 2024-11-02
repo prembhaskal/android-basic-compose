@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -80,9 +82,11 @@ fun SpellathonLayoutMain(modifier: Modifier = Modifier) {
                 end = WindowInsets.safeDrawing
                     .asPaddingValues()
                     .calculateEndPadding(layoutDirection)
-            )
-    ){
-       SpellathonLayout(modifier)
+            ),
+        color = Color.White,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        SpellathonLayout(modifier)
     }
 }
 
@@ -100,8 +104,7 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
             Text(
-                text = "Spellathon",
-                modifier = modifier
+                text = "Spellathon", modifier = modifier
             )
         }
         Row(
@@ -110,7 +113,9 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
             ImageSection(Modifier.weight(1f))
             RuleSection(Modifier.weight(1f))
         }
-        Row(modifier = modifier) {
+        Row(modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,) {
             InputWordSection(inputwords = inputwords)
         }
         Row(modifier = modifier) {
@@ -132,9 +137,7 @@ private fun RuleSection(modifier: Modifier) {
             color = Color.Blue,
         )
         Text(
-            text = "How many words of four or more letters can you make from the letters shown in today's puzzle?" +
-                    "In making a word, each letter may be used once only. Each word must contain the central letter." +
-                    "There should be at least one seven-letter word. Plurals, foreign words and proper names are not allowed.",
+            text = "How many words of four or more letters can you make from the letters shown in today's puzzle?" + "In making a word, each letter may be used once only. Each word must contain the central letter." + "There should be at least one seven-letter word. Plurals, foreign words and proper names are not allowed.",
             modifier = Modifier.padding(start = 5.dp, end = 5.dp),
             textAlign = TextAlign.Justify,
             fontSize = 12.sp,
@@ -145,8 +148,7 @@ private fun RuleSection(modifier: Modifier) {
 @Composable
 private fun ImageSection(modifier: Modifier) {
     Column(
-        modifier = modifier
-            .requiredSize(175.dp),
+        modifier = modifier.requiredSize(175.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(10.dp))
@@ -220,18 +222,26 @@ private fun displayInputWords(
         items(wordItems) { item ->
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .background(
+                        color = Color(0xFFF5F5F5), // light gray background
+                        shape = RoundedCornerShape(8.dp)
+                    ),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                ) {
-                Text(modifier = Modifier
-                    .padding(start = 10.dp)
-                    .weight(0.5f)
-                    , text = item.text)
-                IconButton(
+            ) {
+                Text(
                     modifier = Modifier
-                        .weight(0.5f)
-                        .wrapContentWidth(Alignment.Start),
+                        .padding(start = 10.dp)
+                        .weight(0.5f),
+                    text = item.text,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF2C2C2C),
+                )
+                IconButton(modifier = Modifier
+                    .weight(0.5f)
+                    .wrapContentWidth(Alignment.Start),
                     onClick = {
                         println("deleting word ${item.text} with id ${item.id}")
                         wordItems.remove(item)
@@ -246,9 +256,8 @@ private fun displayInputWords(
     }
 }
 
-data class WordItem (
-    val id: Int,
-    val text: String
+data class WordItem(
+    val id: Int, val text: String
 )
 
 
