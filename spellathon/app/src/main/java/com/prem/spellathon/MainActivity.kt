@@ -212,9 +212,9 @@ private fun displayInputWords(
 ) {
 
     // uncomment below line for testing layout in preview
-    for (i in 1..30) {
-        wordItems.add(WordItem(i, "ARROW" + i))
-    }
+//    for (i in 1..30) {
+//        wordItems.add(WordItem(i, "ARROW" + i))
+//    }
 
     LazyColumn(modifier = Modifier.padding(top = 10.dp)) {
         items(wordItems) { item ->
