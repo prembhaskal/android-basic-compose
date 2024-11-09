@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +31,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -60,8 +62,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SpellathonTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    SpellathonLayoutMain()
+                Scaffold(
+                    topBar = {},
+                    bottomBar = {},
+                ) { paddingValues -> // padding value to keep things within box
+                    SpellathonLayoutMain(modifier = Modifier.padding(paddingValues))
                 }
             }
         }
@@ -72,7 +77,7 @@ class MainActivity : ComponentActivity() {
 fun SpellathonLayoutMain(modifier: Modifier = Modifier) {
     val layoutDirection = LocalLayoutDirection.current
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .statusBarsPadding()
             .padding(
@@ -86,9 +91,22 @@ fun SpellathonLayoutMain(modifier: Modifier = Modifier) {
         color = Color.White,
         shape = RoundedCornerShape(8.dp),
     ) {
-        SpellathonLayout(modifier)
+        SpellathonLayout()
     }
 }
+
+// Don't remove, we can fallback to simple box inside scaffold if surface has problem
+//@Composable
+//fun SpellathonLayoutMain1() {
+//    Scaffold(
+//        topBar = {},
+//        bottomBar = {},
+//    ) {paddingValues ->
+//        Box(modifier = Modifier.padding(paddingValues)) {
+//            SpellathonLayout()
+//        }
+//    }
+//}
 
 @Composable
 fun SpellathonLayout(modifier: Modifier = Modifier) {
@@ -97,12 +115,13 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .fillMaxHeight()
+            .fillMaxHeight(),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceAround,
         ) {
+            // TODO move to Top / App Bar
             Text(
                 text = "Spellathon", modifier = modifier
             )
@@ -113,13 +132,17 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
             ImageSection(Modifier.weight(1f))
             RuleSection(Modifier.weight(1f))
         }
-        Row(modifier = modifier,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,) {
-            InputWordSection(inputwords = inputwords)
-        }
-        Row(modifier = modifier) {
+        // Weight for input words helps to expand it
+        Row(modifier = modifier.weight(1f)) {
             displayInputWords(modifier, wordItems = inputwords)
+        }
+        // no weight effectively pins it at bottom
+        Row(
+            modifier = modifier,
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            InputWordSection(inputwords = inputwords)
         }
     }
 }
@@ -169,8 +192,10 @@ fun InputWordSection(modifier: Modifier = Modifier, inputwords: SnapshotStateLis
     var word by remember { mutableStateOf("") }
     var idCounter by remember { mutableStateOf(0) }
 
-    Column(
-        modifier = Modifier,
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         TextField(
             value = word,
@@ -185,26 +210,27 @@ fun InputWordSection(modifier: Modifier = Modifier, inputwords: SnapshotStateLis
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Text,
             ),
-            modifier = modifier,
+            maxLines = 1,
+            modifier = modifier
+                .weight(1f)
+                .padding(start = 4.dp),
         )
-    }
-    Column(
-        modifier = Modifier.padding(top = 10.dp),
-    ) {
-        Button(onClick = {
-            if (word.length == 0) {
-                println("ignoring empty word")
-            } else {
-                idCounter++
-                println("input word $word with id $idCounter")
-                inputwords.add(WordItem(idCounter, word))
-                word = ""
-            }
-        }) {
+        Button(
+            modifier = Modifier.height(48.dp),
+            onClick = {
+                if (word.length == 0) {
+                    println("ignoring empty word")
+                } else {
+                    idCounter++
+                    println("input word $word with id $idCounter")
+                    inputwords.add(WordItem(idCounter, word))
+                    word = ""
+                }
+            },
+        ) {
             Text("Add")
         }
     }
-
 }
 
 @Composable
@@ -218,7 +244,10 @@ private fun displayInputWords(
 //        wordItems.add(WordItem(i, "ARROW" + i))
 //    }
 
-    LazyColumn(modifier = Modifier.padding(top = 10.dp)) {
+    LazyColumn(
+        modifier = Modifier.padding(top = 10.dp),
+        reverseLayout = true,
+    ) {
         items(wordItems) { item ->
             Row(
                 modifier = Modifier
@@ -239,9 +268,10 @@ private fun displayInputWords(
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF2C2C2C),
                 )
-                IconButton(modifier = Modifier
-                    .weight(0.5f)
-                    .wrapContentWidth(Alignment.Start),
+                IconButton(
+                    modifier = Modifier
+                        .weight(0.5f)
+                        .wrapContentWidth(Alignment.Start),
                     onClick = {
                         println("deleting word ${item.text} with id ${item.id}")
                         wordItems.remove(item)
