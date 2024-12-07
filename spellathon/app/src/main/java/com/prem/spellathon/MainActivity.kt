@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,13 +20,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -44,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -55,6 +60,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prem.spellathon.ui.theme.SpellathonTheme
+import kotlin.math.cos
+import kotlin.math.sin
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -131,6 +138,9 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
         ) {
             ImageSection(Modifier.weight(1f))
             RuleSection(Modifier.weight(1f))
+        }
+        Row (modifier = modifier) {
+            SpellathonGameScreen()
         }
         // Weight for input words helps to expand it
         Row(modifier = modifier.weight(1f)) {
@@ -290,6 +300,96 @@ data class WordItem(
     val id: Int, val text: String
 )
 
+// Example usage in a composable function
+@Composable
+fun SpellathonGameScreen() {
+    var selectedWord by remember { mutableStateOf("") }
+
+    SpellathonHexagonBoard(
+        centerLetter = 'A',
+        edgeLetters = listOf('B', 'C', 'D', 'E', 'F', 'G'),
+        onLetterClicked = { letter ->
+            selectedWord += letter
+        }
+    )
+}
+
+@Composable
+fun SpellathonHexagonBoard(
+    centerLetter: Char,
+    edgeLetters: List<Char>,
+    onLetterClicked: (Char) -> Unit
+) {
+    // Validate input
+    require(edgeLetters.size == 6) { "Must provide exactly 6 edge letters" }
+
+    // Hexagon shape
+    // lambda expression in Kotlin
+    val hexagonShape = GenericShape { size, layoutDirection ->
+
+            val width = size.width
+            val height = size.height
+
+            moveTo(width * 0.5f, 0f)
+            lineTo(width, height * 0.25f)
+            lineTo(width, height * 0.75f)
+            lineTo(width * 0.5f, height)
+            lineTo(0f, height * 0.75f)
+            lineTo(0f, height * 0.25f)
+            close()
+    }
+
+    // Layout the hexagon
+    Box(
+        modifier = Modifier
+            .size(300.dp)
+            .clip(hexagonShape),
+        contentAlignment = Alignment.Center
+    ) {
+        // Center letter
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .clip(hexagonShape)
+                .clickable { onLetterClicked(centerLetter) },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = centerLetter.toString(),
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Red
+            )
+        }
+
+        // Edge letters (positioned around the hexagon)
+        val radius = 120.dp
+        val angles = listOf(0f, 60f, 120f, 180f, 240f, 300f)
+        val offset = 30f
+
+        angles.forEachIndexed { index, angle ->
+            val rads = Math.toRadians(angle.toDouble() + offset)
+            val x = (radius.value * cos(rads)).dp
+            val y = (radius.value * sin(rads)).dp
+
+            Box(
+                modifier = Modifier
+                    .offset(x, y)
+                    .size(60.dp)
+                    .clip(hexagonShape)
+                    .clickable { onLetterClicked(edgeLetters[index]) },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = edgeLetters[index].toString(),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
