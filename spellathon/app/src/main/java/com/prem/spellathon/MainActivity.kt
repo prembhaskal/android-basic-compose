@@ -4,8 +4,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,7 +51,10 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -299,58 +304,92 @@ private fun displayInputWords(
 data class WordItem(
     val id: Int, val text: String
 )
-
-// Example usage in a composable function
-@Composable
-fun SpellathonGameScreen() {
-    var selectedWord by remember { mutableStateOf("") }
-
-    SpellathonHexagonBoard(
-        centerLetter = 'A',
-        edgeLetters = listOf('B', 'C', 'D', 'E', 'F', 'G'),
-        onLetterClicked = { letter ->
-            selectedWord += letter
-        }
-    )
+// Utility function to create a hexagonal path
+fun createHexagonPath(size: Size): Path {
+    return Path().apply {
+//        moveTo(size.width * 0.5f, 0f)
+        moveTo(size.width * 0.5f, 0f)
+        lineTo(size.width, size.height * 0.25f)
+        lineTo(size.width, size.height * 0.75f)
+        lineTo(size.width * 0.5f, size.height)
+        lineTo(0f, size.height * 0.75f)
+        lineTo(0f, size.height * 0.25f)
+        close()
+    }
 }
 
 @Composable
 fun SpellathonHexagonBoard(
     centerLetter: Char,
     edgeLetters: List<Char>,
-    onLetterClicked: (Char) -> Unit
+    onLetterClicked: (Char) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     // Validate input
     require(edgeLetters.size == 6) { "Must provide exactly 6 edge letters" }
 
-    // Hexagon shape
-    // lambda expression in Kotlin
-    val hexagonShape = GenericShape { size, layoutDirection ->
-
-            val width = size.width
-            val height = size.height
-
-            moveTo(width * 0.5f, 0f)
-            lineTo(width, height * 0.25f)
-            lineTo(width, height * 0.75f)
-            lineTo(width * 0.5f, height)
-            lineTo(0f, height * 0.75f)
-            lineTo(0f, height * 0.25f)
-            close()
+    // Hexagon shapes with outlines
+    val outerHexagonShape = GenericShape { size, layoutDirection ->
+        addPath(createHexagonPath(size))
     }
 
-    // Layout the hexagon
+    val centerHexagonShape = GenericShape { size, layoutDirection ->
+        addPath(createHexagonPath(size))
+    }
+
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(300.dp)
-            .clip(hexagonShape),
+            .border(2.dp, Color.Black, outerHexagonShape)
+            .clip(outerHexagonShape),
         contentAlignment = Alignment.Center
     ) {
+        // Canvas for drawing connections
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val outerSize = size
+            val centerSize = Size(outerSize.width * 0.4f, outerSize.height * 0.4f)
+
+            // Draw connections between outer and center hexagon corners
+            val outerPath = createHexagonPath(outerSize)
+            val centerPath = createHexagonPath(centerSize)
+
+            // Get corner points of outer and center hexagons
+            val outerCorners = listOf(
+                Offset(outerSize.width * 0.5f, 0f),
+                Offset(outerSize.width, outerSize.height * 0.25f),
+                Offset(outerSize.width, outerSize.height * 0.75f),
+                Offset(outerSize.width * 0.5f, outerSize.height),
+                Offset(0f, outerSize.height * 0.75f),
+                Offset(0f, outerSize.height * 0.25f)
+            )
+
+            val centerCorners = listOf(
+                Offset(centerSize.width * 0.5f, 0f),
+                Offset(centerSize.width, centerSize.height * 0.25f),
+                Offset(centerSize.width, centerSize.height * 0.75f),
+                Offset(centerSize.width * 0.5f, centerSize.height),
+                Offset(0f, centerSize.height * 0.75f),
+                Offset(0f, centerSize.height * 0.25f)
+            )
+
+            // Draw connection lines
+            outerCorners.forEachIndexed { index, outerCorner ->
+                val centerCorner = centerCorners[index]
+                drawLine(
+                    color = Color.Black.copy(alpha = 0.3f),
+                    start = outerCorner,
+                    end = centerCorner,
+                    strokeWidth = 1f
+                )
+            }
+        }
+
         // Center letter
         Box(
             modifier = Modifier
-                .size(100.dp)
-                .clip(hexagonShape)
+                .size(120.dp)
+                .border(2.dp, Color.Black, centerHexagonShape)
+                .clip(centerHexagonShape)
                 .clickable { onLetterClicked(centerLetter) },
             contentAlignment = Alignment.Center
         ) {
@@ -365,7 +404,7 @@ fun SpellathonHexagonBoard(
         // Edge letters (positioned around the hexagon)
         val radius = 120.dp
         val angles = listOf(0f, 60f, 120f, 180f, 240f, 300f)
-        val offset = 30f
+        val offset = 0.0f
 
         angles.forEachIndexed { index, angle ->
             val rads = Math.toRadians(angle.toDouble() + offset)
@@ -376,7 +415,8 @@ fun SpellathonHexagonBoard(
                 modifier = Modifier
                     .offset(x, y)
                     .size(60.dp)
-                    .clip(hexagonShape)
+                    .border(2.dp, Color.Black, outerHexagonShape)
+                    .clip(outerHexagonShape)
                     .clickable { onLetterClicked(edgeLetters[index]) },
                 contentAlignment = Alignment.Center
             ) {
@@ -384,11 +424,25 @@ fun SpellathonHexagonBoard(
                     text = edgeLetters[index].toString(),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = Color.Blue
                 )
             }
         }
     }
+}
+
+// Example usage
+@Composable
+fun SpellathonGameScreen() {
+    var selectedWord by remember { mutableStateOf("") }
+
+    SpellathonHexagonBoard(
+        centerLetter = 'A',
+        edgeLetters = listOf('B', 'C', 'D', 'E', 'F', 'G'),
+        onLetterClicked = { letter ->
+            selectedWord += letter
+        }
+    )
 }
 
 @Preview(showBackground = true)
