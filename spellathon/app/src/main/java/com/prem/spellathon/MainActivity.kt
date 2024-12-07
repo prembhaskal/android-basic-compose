@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.prem.spellathon.ui.theme.SpellathonTheme
 import kotlin.math.cos
 import kotlin.math.sin
@@ -307,14 +308,16 @@ data class WordItem(
 // Utility function to create a hexagonal path
 fun createHexagonPath(size: Size): Path {
     return Path().apply {
+// computer graphics and Android's coordinate system,
+// the y-axis is inverted compared to traditional mathematical coordinate systems:
 //        moveTo(size.width * 0.5f, 0f)
-        moveTo(size.width * 0.5f, 0f)
-        lineTo(size.width, size.height * 0.25f)
-        lineTo(size.width, size.height * 0.75f)
-        lineTo(size.width * 0.5f, size.height)
-        lineTo(0f, size.height * 0.75f)
-        lineTo(0f, size.height * 0.25f)
-        close()
+        moveTo(size.width * 0.25f, 0f) // left top corner
+        lineTo(size.width * 0.75f, 0f) // right top corner
+        lineTo(size.width, size.height * 0.5f) // right center corner
+        lineTo(size.width * 0.75f, size.height) // right bottom corner
+        lineTo(size.width * 0.25f, size.height) // left bottom corner
+        lineTo(0f, size.height * 0.5f) // left center corner
+        close() // connect back to first
     }
 }
 
@@ -347,7 +350,7 @@ fun SpellathonHexagonBoard(
         // Canvas for drawing connections
         Canvas(modifier = Modifier.fillMaxSize()) {
             val outerSize = size
-            val centerSize = Size(outerSize.width * 0.4f, outerSize.height * 0.4f)
+            val centerSize = Size(outerSize.width * 0.1f, outerSize.height * 0.1f)
 
             // Draw connections between outer and center hexagon corners
             val outerPath = createHexagonPath(outerSize)
@@ -355,41 +358,48 @@ fun SpellathonHexagonBoard(
 
             // Get corner points of outer and center hexagons
             val outerCorners = listOf(
-                Offset(outerSize.width * 0.5f, 0f),
-                Offset(outerSize.width, outerSize.height * 0.25f),
-                Offset(outerSize.width, outerSize.height * 0.75f),
-                Offset(outerSize.width * 0.5f, outerSize.height),
-                Offset(0f, outerSize.height * 0.75f),
-                Offset(0f, outerSize.height * 0.25f)
+                Offset(outerSize.width * 0.25f, 0f),
+                Offset(outerSize.width * 0.75f, 0f),
+                Offset(outerSize.width, outerSize.height * 0.5f),
+                Offset(outerSize.width * 0.75f, outerSize.height),
+                Offset(outerSize.width * 0.25f, outerSize.height),
+                Offset(0f, outerSize.height * 0.5f)
+            )
+            val centerCorners = listOf(
+                Offset(centerSize.width * 0.25f, 0f),
+                Offset(centerSize.width * 0.75f, 0f),
+                Offset(centerSize.width, centerSize.height * 0.5f),
+                Offset(centerSize.width * 0.75f, centerSize.height),
+                Offset(centerSize.width * 0.25f, centerSize.height),
+                Offset(0f, centerSize.height * 0.5f)
             )
 
-            val centerCorners = listOf(
-                Offset(centerSize.width * 0.5f, 0f),
-                Offset(centerSize.width, centerSize.height * 0.25f),
-                Offset(centerSize.width, centerSize.height * 0.75f),
-                Offset(centerSize.width * 0.5f, centerSize.height),
-                Offset(0f, centerSize.height * 0.75f),
-                Offset(0f, centerSize.height * 0.25f)
-            )
+            drawLine(color = Color.Black, start = outerCorners[0], end = outerCorners[3], strokeWidth=2f)
+            drawLine(color = Color.Black, start = outerCorners[1], end = outerCorners[4], strokeWidth=2f)
+            drawLine(color = Color.Black, start = outerCorners[2], end = outerCorners[5], strokeWidth=2f)
 
             // Draw connection lines
-            outerCorners.forEachIndexed { index, outerCorner ->
-                val centerCorner = centerCorners[index]
-                drawLine(
-                    color = Color.Black.copy(alpha = 0.3f),
-                    start = outerCorner,
-                    end = centerCorner,
-                    strokeWidth = 1f
-                )
-            }
+            // TODO this is not working because maths of inner vs outer corner is not exact ratio of size of components in dp
+//            outerCorners.forEachIndexed { index, outerCorner ->
+//                val centerCorner = centerCorners[index]
+//                drawLine(
+////                    color = Color.Black.copy(alpha = 0.3f),
+//                    color = Color.Black,
+//                    start = outerCorner,
+//                    end = centerCorner,
+//                    strokeWidth = 4f
+//                )
+//            }
         }
 
         // Center letter
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .size(100.dp)
                 .border(2.dp, Color.Black, centerHexagonShape)
                 .clip(centerHexagonShape)
+                .zIndex(10f)
+                .background(Color.DarkGray) // Distinct background using background colors or overlays to mask
                 .clickable { onLetterClicked(centerLetter) },
             contentAlignment = Alignment.Center
         ) {
@@ -404,7 +414,7 @@ fun SpellathonHexagonBoard(
         // Edge letters (positioned around the hexagon)
         val radius = 120.dp
         val angles = listOf(0f, 60f, 120f, 180f, 240f, 300f)
-        val offset = 0.0f
+        val offset = 30.0f
 
         angles.forEachIndexed { index, angle ->
             val rads = Math.toRadians(angle.toDouble() + offset)
@@ -415,8 +425,9 @@ fun SpellathonHexagonBoard(
                 modifier = Modifier
                     .offset(x, y)
                     .size(60.dp)
-                    .border(2.dp, Color.Black, outerHexagonShape)
-                    .clip(outerHexagonShape)
+//                    .border(2.dp, Color.Black, outerHexagonShape)
+//                    .border(2.dp, Color.Black)
+//                    .clip(outerHexagonShape)
                     .clickable { onLetterClicked(edgeLetters[index]) },
                 contentAlignment = Alignment.Center
             ) {
