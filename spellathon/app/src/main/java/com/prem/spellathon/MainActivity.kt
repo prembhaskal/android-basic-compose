@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -37,6 +38,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -124,6 +126,7 @@ fun SpellathonLayoutMain(modifier: Modifier = Modifier) {
 @Composable
 fun SpellathonLayout(modifier: Modifier = Modifier) {
     val inputwords = remember { mutableStateListOf<WordItem>() }
+    var word by remember { mutableStateOf("WORLD") }
 
     Column(
         modifier = modifier
@@ -139,27 +142,36 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
                 text = "Spellathon", modifier = modifier
             )
         }
-        Row(
-            modifier = modifier,
-        ) {
-            ImageSection(Modifier.weight(1f))
-            RuleSection(Modifier.weight(1f))
-        }
-        Row (modifier = modifier) {
-            SpellathonGameScreen()
-        }
+//        Row(
+//            modifier = modifier,
+//        ) {
+//            ImageSection(Modifier.weight(1f))
+//            RuleSection(Modifier.weight(1f))
+//        }
         // Weight for input words helps to expand it
         Row(modifier = modifier.weight(1f)) {
             displayInputWords(modifier, wordItems = inputwords)
         }
-        // no weight effectively pins it at bottom
-        Row(
-            modifier = modifier,
+//        Row(modifier = modifier) {
+//            OutlinedTextField(value = word, onValueChange = {}, readOnly = true);
+//        }
+        Row(modifier = modifier,
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
-        ) {
-            InputWordSection(inputwords = inputwords)
+            ) {
+            InputWordSection1(modifier, word, { word = it }, inputwords)
         }
+        // no weight effectively pins it at bottom
+        Row (modifier = modifier) {
+            SpellathonGameScreen(word, { word = it })
+        }
+//        Row(
+//            modifier = modifier,
+//            horizontalArrangement = Arrangement.SpaceEvenly,
+//            verticalAlignment = Alignment.CenterVertically,
+//        ) {
+//            InputWordSection(inputwords = inputwords)
+//        }
     }
 }
 
@@ -200,6 +212,48 @@ private fun ImageSection(modifier: Modifier) {
                 .requiredSize(160.dp)
                 .padding(top = 10.dp)
         )
+    }
+}
+
+@Composable
+fun InputWordSection1(modifier: Modifier = Modifier,
+                      word: String, updateWord: (String) -> Unit,
+                      inputwords: SnapshotStateList<WordItem>) {
+//    var word by remember { mutableStateOf("") }
+    var idCounter by remember { mutableStateOf(0) }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        TextField(
+            value = word,
+//            leadingIcon = { Icon(painter = painterResource(id = R.drawable.keyboard_24dp), null) },
+            onValueChange = {},
+            label = { Text(stringResource(R.string.input_word)) },
+            singleLine = true,
+            readOnly = true,
+            maxLines = 1,
+            modifier = modifier
+                .weight(1f)
+                .padding(start = 4.dp),
+        )
+        Button(
+            modifier = Modifier.height(48.dp),
+            onClick = {
+                if (word.isEmpty()) {
+                    println("ignoring empty word")
+                } else {
+                    idCounter++
+                    println("input word $word with id $idCounter")
+                    inputwords.add(WordItem(idCounter, word))
+                    updateWord("")
+                }
+            },
+        ) {
+            Text("Add")
+        }
     }
 }
 
@@ -416,15 +470,27 @@ fun SpellathonHexagonBoard(
         val angles = listOf(0f, 60f, 120f, 180f, 240f, 300f)
         val offset = 30.0f
 
+        val offsets = listOf(
+            Pair(-20,0), // bottom right
+            Pair(0,-10), // bottom centre
+            Pair(20,0),
+            Pair(20, 10),
+            Pair(0, 20),
+            Pair(-20, 0) // top right
+        )
+
         angles.forEachIndexed { index, angle ->
             val rads = Math.toRadians(angle.toDouble() + offset)
             val x = (radius.value * cos(rads)).dp
             val y = (radius.value * sin(rads)).dp
+            val xoff = x + offsets[index].first.dp
+            val yoff = y + offsets[index].second.dp
 
             Box(
                 modifier = Modifier
-                    .offset(x, y)
+                    .offset(xoff, yoff)
                     .size(60.dp)
+//                    .padding(pads[index])
 //                    .border(2.dp, Color.Black, outerHexagonShape)
 //                    .border(2.dp, Color.Black)
 //                    .clip(outerHexagonShape)
@@ -444,14 +510,15 @@ fun SpellathonHexagonBoard(
 
 // Example usage
 @Composable
-fun SpellathonGameScreen() {
-    var selectedWord by remember { mutableStateOf("") }
+fun SpellathonGameScreen(word: String, updateWord: (String) -> Unit) {
+//    var selectedWord by remember { mutableStateOf("") }
 
     SpellathonHexagonBoard(
-        centerLetter = 'A',
-        edgeLetters = listOf('B', 'C', 'D', 'E', 'F', 'G'),
+        centerLetter = 'R',
+        edgeLetters = listOf('R', 'L', 'A', 'W', 'D', 'O'),
         onLetterClicked = { letter ->
-            selectedWord += letter
+//            selectedWord += letter
+            updateWord(word + letter)
         }
     )
 }
