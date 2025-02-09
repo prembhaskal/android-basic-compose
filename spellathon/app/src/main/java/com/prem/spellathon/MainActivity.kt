@@ -164,6 +164,7 @@ fun SpellathonLayout(modifier: Modifier = Modifier) {
         // no weight effectively pins it at bottom
         Row (modifier = modifier) {
             SpellathonGameScreen(word, { word = it })
+            EditorSection(modifier, word, {word = it}, inputwords)
         }
 //        Row(
 //            modifier = modifier,
@@ -197,6 +198,36 @@ private fun RuleSection(modifier: Modifier) {
 }
 
 @Composable
+private fun EditorSection(modifier: Modifier, word: String, updateWord: (String) -> Unit,
+                          inputwords: SnapshotStateList<WordItem>) {
+    var idCounter by remember { mutableStateOf(0) }
+    Column(
+        modifier = modifier,
+    ) {
+        Button(
+            modifier = modifier,
+            onClick = {
+                if (word.isEmpty()) {
+                    println("ignore empty word")
+                } else {
+                    idCounter++
+                    inputwords.add(WordItem(idCounter, word))
+                    updateWord("")
+                }
+            }) {
+        Text("AddN")
+        }
+        Button(
+            modifier = modifier,
+            onClick = {
+                updateWord("")
+            }) {
+        Text("ClearN")
+        }
+    }
+}
+
+@Composable
 private fun ImageSection(modifier: Modifier) {
     Column(
         modifier = modifier.requiredSize(175.dp),
@@ -219,7 +250,6 @@ private fun ImageSection(modifier: Modifier) {
 fun InputWordSection1(modifier: Modifier = Modifier,
                       word: String, updateWord: (String) -> Unit,
                       inputwords: SnapshotStateList<WordItem>) {
-//    var word by remember { mutableStateOf("") }
     var idCounter by remember { mutableStateOf(0) }
 
     Row(
@@ -229,7 +259,6 @@ fun InputWordSection1(modifier: Modifier = Modifier,
     ) {
         TextField(
             value = word,
-//            leadingIcon = { Icon(painter = painterResource(id = R.drawable.keyboard_24dp), null) },
             onValueChange = {},
             label = { Text(stringResource(R.string.input_word)) },
             singleLine = true,
