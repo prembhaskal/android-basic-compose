@@ -1,3 +1,12 @@
+## Version
+### Version 1
+- one level, no animations
+
+### Version 2
+- add multiple levels
+- level selection screen
+- navigation
+- store levels in persistent storage
 ## TODOS
 - Fix font color in the text box
   - in general material theme gets messed up when phone has dark theme on
