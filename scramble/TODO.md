@@ -3,6 +3,7 @@
 - one level, no animations
 
 ### Version 2
+- use https://developer.android.com/topic/libraries/architecture/lifecycle for this version
 - add multiple levels
 - level selection screen
 - navigation
