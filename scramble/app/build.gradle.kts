@@ -1,7 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    kotlin("kapt")
+    // kotlin("kapt")
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -88,4 +90,29 @@ dependencies {
 
     // Annotation processor
     kapt("androidx.lifecycle:lifecycle-compiler:$lifecycle_version")
+
+    val roomVersion = "2.6.1" // Use the latest version
+
+    implementation("androidx.room:room-runtime:$roomVersion")
+    annotationProcessor("androidx.room:room-compiler:$roomVersion")
+
+    // Dagger/Hilt
+    implementation("com.google.dagger:hilt-android:2.48")
+    kapt("com.google.dagger:hilt-android-compiler:2.48")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+
+    // Jetpack Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.5")
+
+    // Jetpack Compose (needed for navigation-compose)
+    implementation("androidx.compose.ui:ui:1.5.4")
+    implementation("androidx.compose.material:material:1.5.4")
+
+    // For javax.inject
+    implementation("javax.inject:javax.inject:1")
+}
+
+// Allow references to generated code
+kapt {
+    correctErrorTypes = true
 }

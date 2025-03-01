@@ -1,12 +1,24 @@
 package com.prem.scramble
 
+import android.app.GameState
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.prem.scramble.database.GameDatabase
+import com.prem.scramble.database.GameProgressEntity
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class GameViewModel : ViewModel() {
+@HiltViewModel
+class GameViewModel @Inject constructor(
+    private val gameDatabase: GameDatabase,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+    private val levelId: Int = savedStateHandle["levelId"] ?: 1
+
     private val _gameState = MutableStateFlow<GameState>(GameState.Loading)
     val gameState: StateFlow<GameState> = _gameState
 
@@ -22,41 +34,27 @@ class GameViewModel : ViewModel() {
     private fun loadGame() {
         viewModelScope.launch {
             val levels = generateLevels()
-            _gameState.value = GameState.Playing(levels[0])
-            currentLevel = levels[0]
-        }
-    }
+            val level = levels.find { it.id == levelId } ?: levels[0]
 
-    fun updateWord(index: Int, word: String) {
-        val currentList = _currentInputs.value.toMutableList()
-        currentList[index] = word.uppercase()
-        _currentInputs.value = currentList
-    }
-
-    fun checkSolution() {
-        val level = currentLevel ?: return
-        val isCorrect = _currentInputs.value.zip(level.words).all { (input, word) ->
-            input.equals(word.original, ignoreCase = true)
-        }
-
-        if (isCorrect) {
-            _gameState.value = GameState.Success
-            saveProgress()
-        } else {
-            _gameState.value = GameState.Error("Not all words are correct. Try again!")
-        }
-    }
-
-    private fun saveProgress() {
-        viewModelScope.launch {
-            // Save progress to local storage
-            currentLevel?.let { level ->
-                val progress = GameProgress(
-                    levelId = level.id,
-                    solvedWords = _currentInputs.value
-                )
-                // Implementation for saving to DataStore or Room DB
+            // Load saved progress
+            val progress = gameDatabase.gameProgressDao().getProgressForLevel(levelId)
+            if (progress != null) {
+                _currentInputs.value = progress.solvedWords.split(",")
             }
+
+            _gameState.value = GameState.Playing(level)
+            currentLevel = level
+        }
+    }
+
+    private suspend fun saveProgress() {
+        currentLevel?.let { level ->
+            val progress = GameProgressEntity(
+                levelId = level.id,
+                completed = true,
+                solvedWords = _currentInputs.value.joinToString(",")
+            )
+            gameDatabase.gameProgressDao().saveProgress(progress)
         }
     }
 
@@ -71,14 +69,42 @@ class GameViewModel : ViewModel() {
                     Word("BRAIN", "NBRAI")
                 )
             ),
-            // Add more levels here
+            Level(
+                id = 2,
+                words = listOf(
+                    Word("SHAPE", "HEAPS"),
+                    Word("LIGHT", "THLIG"),
+                    Word("DREAM", "MREAD"),
+                    Word("WATER", "TWARE")
+                )
+            ),
+            Level(
+                id = 3,
+                words = listOf(
+                    Word("DANCE", "CANDE"),
+                    Word("MUSIC", "CUSIM"),
+                    Word("SOUND", "DUSNO"),
+                    Word("RHYTHM", "THRYM")
+                )
+            ),
+            Level(
+                id = 4,
+                words = listOf(
+                    Word("EARTH", "THEAR"),
+                    Word("SPACE", "CESPA"),
+                    Word("STARS", "RASST"),
+                    Word("MOON", "NOOM")
+                )
+            ),
+            Level(
+                id = 5,
+                words = listOf(
+                    Word("COLOR", "ROLOC"),
+                    Word("PAINT", "NIPAT"),
+                    Word("BRUSH", "SHRUB"),
+                    Word("STYLE", "LYSTY")
+                )
+            )
         )
     }
-}
-
-sealed class GameState {
-    object Loading : GameState()
-    data class Playing(val level: Level) : GameState()
-    object Success : GameState()
-    data class Error(val message: String) : GameState()
 }
