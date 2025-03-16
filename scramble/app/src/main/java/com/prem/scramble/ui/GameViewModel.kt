@@ -47,26 +47,11 @@ class GameViewModel: ViewModel() {
                 currentState.copy(levelData = levelData
                 )
             }
+            // TODO show success popup message
+            // TODO add logic to go to next level
         } else {
-            // Show error message
+            // TODO Show error message
         }
-
-//        _gameState.update { state ->
-//            state.copy(
-//
-//            )
-//        }
     }
-
-//    private suspend fun saveProgress() {
-//        currentLevel?.let { level ->
-//            val progress = GameProgressEntity(
-//                levelId = level.id,
-//                completed = true,
-//                solvedWords = _currentInputs.value.joinToString(",")
-//            )
-//            gameDatabase.gameProgressDao().saveProgress(progress)
-//        }
-//    }
 
 }
