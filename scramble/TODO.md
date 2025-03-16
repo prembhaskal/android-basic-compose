@@ -1,6 +1,7 @@
 ## Version
 ### Version 1
 - one level, no animations
+- use proper viewmodel/ui layer separation.
 
 ### Version 2
 - use https://developer.android.com/topic/libraries/architecture/lifecycle for this version

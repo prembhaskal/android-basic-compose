@@ -1,9 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    // kotlin("kapt")
-    id("kotlin-kapt")
-    id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -72,47 +70,13 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     val lifecycle_version = "2.8.7"
-    val arch_version = "2.2.0"
 
-    // ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version")
     // ViewModel utilities for Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version")
-    // LiveData
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version")
     // Lifecycles only (without ViewModel or LiveData)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version")
-    // Lifecycle utilities for Compose
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version")
-
-    // Saved state module for ViewModel
-    implementation("androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version")
-
-    // Annotation processor
-    kapt("androidx.lifecycle:lifecycle-compiler:$lifecycle_version")
-
-    val roomVersion = "2.6.1" // Use the latest version
-
-    implementation("androidx.room:room-runtime:$roomVersion")
-    annotationProcessor("androidx.room:room-compiler:$roomVersion")
-
-    // Dagger/Hilt
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-android-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
-
-    // Jetpack Navigation
-    implementation("androidx.navigation:navigation-compose:2.7.5")
 
     // Jetpack Compose (needed for navigation-compose)
     implementation("androidx.compose.ui:ui:1.5.4")
     implementation("androidx.compose.material:material:1.5.4")
-
-    // For javax.inject
-    implementation("javax.inject:javax.inject:1")
-}
-
-// Allow references to generated code
-kapt {
-    correctErrorTypes = true
 }

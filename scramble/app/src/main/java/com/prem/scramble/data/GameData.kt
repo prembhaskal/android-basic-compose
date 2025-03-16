@@ -1,13 +1,13 @@
-package com.prem.scramble
+package com.prem.scramble.data
 
-data class Word (
+data class WordPair (
     val original: String,
     val scrambled: String
 )
 
 data class Level(
     val id: Int,
-    val words: List<Word>,
+    val wordPairs: List<WordPair>,
     var completed: Boolean = false
 )
 
