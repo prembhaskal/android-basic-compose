@@ -4,7 +4,9 @@
 - use proper viewmodel/ui layer separation.
 
 ### Version 2
-- use https://developer.android.com/topic/libraries/architecture/lifecycle for this version
+- use below links for this version
+  - https://developer.android.com/topic/libraries/architecture/lifecycle  and 
+  - https://developer.android.com/topic/architecture/ui-layer#udf
 - add multiple levels
 - level selection screen
 - navigation
