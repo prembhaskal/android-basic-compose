@@ -8,8 +8,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 class GameViewModel: ViewModel() {
+
+    // Backing property to avoid state updates from other classes
     private val _gameState = MutableStateFlow(GameUIState())
-    val gameState: StateFlow<GameUIState> = _gameState.asStateFlow()
+    val gameState: StateFlow<GameUIState> = _gameState.asStateFlow() // gameState is read-only copy of _gameState
 
     init {
         resetGame()

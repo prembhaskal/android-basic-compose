@@ -5,8 +5,9 @@
 
 ### Version 2
 - use below links for this version
-  - https://developer.android.com/topic/libraries/architecture/lifecycle  and 
+  - https://developer.android.com/topic/libraries/architecture/lifecycle 
   - https://developer.android.com/topic/architecture/ui-layer#udf
+  - https://developer.android.com/topic/libraries/architecture/viewmodel
 - add multiple levels
 - level selection screen
 - navigation
