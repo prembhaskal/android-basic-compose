@@ -11,4 +11,7 @@ data class GameUIState(
     val currentInputs: MutableList<String> = mutableListOf(),
     val isGameOver: Boolean = false,
 
+    // for testing only
+    val isGuessedWordWrong: Boolean = false
+
 )
