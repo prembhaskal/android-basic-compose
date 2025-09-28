@@ -3,17 +3,20 @@ package com.prem.scramble.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.MaterialTheme.typography
@@ -49,6 +52,8 @@ fun GameScreen(
 
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
 
+    val words = gameUiState.levelData.wordPairs
+
     Column(
         modifier = Modifier
             .statusBarsPadding()
@@ -63,17 +68,27 @@ fun GameScreen(
             text = "unscramble",
             style = typography.titleLarge,
         )
-        GameLayout(
-            currentScrambledWord = currentScrambledWord,
-            userGuess = gameViewModel.userGuess,
-            onUserGuessChanged = {gameViewModel.updateUserGuess(it)},
-            onKeyboardDone = { gameViewModel.checkUserGuess()},
-            isGuessWrong = gameUiState.isGuessedWordWrong,
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(mediumPadding)
-        )
+
+//        GameLayout(
+//            currentScrambledWord = currentScrambledWord,
+//            userGuess = gameViewModel.userGuess,
+//            onUserGuessChanged = {gameViewModel.updateUserGuess(it)},
+//            onKeyboardDone = { gameViewModel.checkUserGuess()},
+//            isGuessWrong = gameUiState.isGuessedWordWrong,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .wrapContentHeight()
+//                .padding(mediumPadding)
+//        )
+
+        for ((index, word) in words.withIndex()) {
+            WordLayout(
+                modifier = Modifier,
+                scrambledWord = word.scrambled,
+                userGuess = gameViewModel.userGuess,
+                userGuessChanged = {gameViewModel.onInputChanged(index, it)})
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -178,6 +193,43 @@ fun GameLayout(
                 )
             )
         }
+    }
+}
+
+@Composable
+fun WordLayout(
+    modifier: Modifier = Modifier,
+    scrambledWord: String,
+    userGuess: String,
+    userGuessChanged: (String) -> Unit) {
+    // row with scrambled words, actual word + icon for right/wrong/unanswered
+
+    Row (
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Text(
+            text = scrambledWord,
+            fontSize = 24.sp,
+            modifier = Modifier.weight(0.4f)
+        )
+        OutlinedTextField(
+            value = userGuess,
+            onValueChange = userGuessChanged,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.5f),
+            singleLine = true,
+            label = { Text("fill it") },
+            colors = TextFieldDefaults.colors(),
+            shape = shapes.medium
+        )
+        Icon(
+            imageVector = Icons.Filled.Close,
+            contentDescription = "wrong",
+            modifier = Modifier.weight(0.1f)
+        )
     }
 }
 

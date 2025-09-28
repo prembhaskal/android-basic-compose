@@ -1,4 +1,8 @@
 ## Version
+
+### Game google doc
+https://docs.google.com/document/d/1w8Wt1EjPX8rhOP4-2vSOVQGQSCVblYkJY5A38n11nXw/edit?tab=t.1lpve04thsn4#heading=h.3r6bj23zd9op
+
 ### Version 1
 - one level, no animations
 - use proper viewmodel/ui layer separation.
