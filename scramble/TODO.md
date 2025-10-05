@@ -17,6 +17,7 @@ https://docs.google.com/document/d/1w8Wt1EjPX8rhOP4-2vSOVQGQSCVblYkJY5A38n11nXw/
 - navigation
 - store levels in persistent storage
 ## TODOS
+- Update data model from https://docs.google.com/document/d/1w8Wt1EjPX8rhOP4-2vSOVQGQSCVblYkJY5A38n11nXw/edit?tab=t.1lpve04thsn4#heading=h.pkaqyjqwn1xi .
 - Fix font color in the text box
   - in general material theme gets messed up when phone has dark theme on
 - Add navigation, storage from claude response (claude file 2) 
