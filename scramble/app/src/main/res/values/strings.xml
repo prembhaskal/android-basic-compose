@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">scramble</string>
+    <string name="word_count">%d/10</string>
 </resources>

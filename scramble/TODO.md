@@ -1,9 +1,17 @@
 ## Version
+
+### Game google doc
+https://docs.google.com/document/d/1w8Wt1EjPX8rhOP4-2vSOVQGQSCVblYkJY5A38n11nXw/edit?tab=t.1lpve04thsn4#heading=h.3r6bj23zd9op
+
 ### Version 1
 - one level, no animations
+- use proper viewmodel/ui layer separation.
 
 ### Version 2
-- use https://developer.android.com/topic/libraries/architecture/lifecycle for this version
+- use below links for this version
+  - https://developer.android.com/topic/libraries/architecture/lifecycle 
+  - https://developer.android.com/topic/architecture/ui-layer#udf
+  - https://developer.android.com/topic/libraries/architecture/viewmodel
 - add multiple levels
 - level selection screen
 - navigation
