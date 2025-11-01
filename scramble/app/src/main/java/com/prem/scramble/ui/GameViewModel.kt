@@ -1,10 +1,12 @@
 package com.prem.scramble.ui
 
 import android.util.Log
+import androidx.activity.result.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.prem.scramble.data.gameLevelsData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +33,25 @@ class GameViewModel: ViewModel() {
             currentLevel = 1,
             levelData = level
         )
+
+//        init {
+//            // When the ViewModel is created, load the user's progress
+//            viewModelScope.launch {
+//                val loadedUserData = repository.loadUserGameData()
+//
+//                // Assume you have a way to load static GameData too
+//                val staticGameData = loadStaticGameData() // from assets, etc.
+//
+//                _uiState.value = GameUiState(
+//                    totalGameData = TotalGameData(
+//                        originalGameData = staticGameData,
+//                        userData = loadedUserData
+//                    ),
+//                    //... other initial state
+//                )
+//            }
+//        }
+
     }
 
 
