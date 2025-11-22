@@ -47,12 +47,10 @@ fun GameScreen(
 
     val gameUiState by gameViewModel.gameState.collectAsState()
 
-    val pair = gameUiState.levelData.wordPairs.get(0)
-    val currentScrambledWord = pair.scrambled
-
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
 
-    val words = gameUiState.levelData.wordPairs
+    val level1GameData = gameUiState.gameData.levelsData.get(0)
+    val level1UserData = gameUiState.userGameData.allUserLevelData.get(0)
 
     Column(
         modifier = Modifier
@@ -81,13 +79,26 @@ fun GameScreen(
 //                .padding(mediumPadding)
 //        )
 
-        for ((index, word) in words.withIndex()) {
+//        for ((index, word) in words.withIndex()) {
+//            WordLayout(
+//                modifier = Modifier,
+//                scrambledWord = word.scrambled,
+//                userGuess = gameViewModel.userGuess,
+//                userGuessChanged = {gameViewModel.onInputChanged(index, it)})
+//        }
+
+            // fori loop in kotlin
+        for ( wordIdx in 0..3) {
+            val scrambledWord = level1GameData.puzzles.get(wordIdx).scrambledWord
+            val userGuess = level1UserData.puzzles.get(wordIdx)
             WordLayout(
                 modifier = Modifier,
-                scrambledWord = word.scrambled,
-                userGuess = gameViewModel.userGuess,
-                userGuessChanged = {gameViewModel.onInputChanged(index, it)})
+                scrambledWord = scrambledWord,
+                userGuess = userGuess,
+                userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)}
+            )
         }
+
 
         Column(
             modifier = Modifier
@@ -128,6 +139,7 @@ fun GameStatus(score: Int, modifier: Modifier = Modifier) {
     }
 }
 
+// unused for now.
 @Composable
 fun GameLayout(
     onUserGuessChanged: (String) -> Unit,
@@ -196,6 +208,9 @@ fun GameLayout(
     }
 }
 
+// WordLayout represents 1 row with scrambledWord on left,
+// then userGuess on its right,
+// then icon for right/wrong/unanswered
 @Composable
 fun WordLayout(
     modifier: Modifier = Modifier,

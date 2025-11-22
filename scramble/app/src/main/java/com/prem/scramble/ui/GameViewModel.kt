@@ -1,17 +1,17 @@
 package com.prem.scramble.ui
 
-import android.util.Log
-import androidx.activity.result.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.prem.scramble.data.gameLevelsData
+import com.prem.scramble.data.GameData
+import com.prem.scramble.data.UserGameData
+import com.prem.scramble.data.UserLevelData
+import com.prem.scramble.data.levelData1
+import com.prem.scramble.data.levelData2
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 
 class GameViewModel: ViewModel() {
 
@@ -28,13 +28,28 @@ class GameViewModel: ViewModel() {
     }
 
     private fun resetGame() {
-        val level = gameLevelsData[0]
-        _gameState.value = GameUIState(
-            currentLevel = 1,
-            levelData = level
+
+        // init the game state
+        val staticGameData = GameData(listOf(levelData1, levelData2))
+        val userLevelData = UserLevelData(
+            levelId = 1,
+            levelData = levelData1,
+            puzzles = mutableListOf("", "", "", ""),
+            riddleAnswer = "",
+            isLevelSolved = false
+        )
+        val staticUserGameData = UserGameData(
+            allUserLevelData = listOf(userLevelData),
+            totalCompletedLevels = 0,
+            currentLevel = 0,
         )
 
-//        init {
+        _gameState.value = GameUIState(
+            gameData = staticGameData,
+            userGameData = staticUserGameData,
+        )
+
+
 //            // When the ViewModel is created, load the user's progress
 //            viewModelScope.launch {
 //                val loadedUserData = repository.loadUserGameData()
@@ -50,9 +65,10 @@ class GameViewModel: ViewModel() {
 //                    //... other initial state
 //                )
 //            }
-//        }
 
     }
+
+
 
 
     fun updateUserGuess(input: String) {
@@ -61,50 +77,50 @@ class GameViewModel: ViewModel() {
     }
 
     fun checkUserGuess() {
-        val expected = _gameState.value.levelData.wordPairs[0].original
-        if (userGuess.equals(expected, ignoreCase = true)) {
-            // log that guess was true
-            Log.d("GameViewModel", "User guess was correct, expected: ${expected}, actual: ${userGuess}")
-        } else {
-            Log.d("GameViewModel", "User guess was correct, expected: ${expected}, actual: ${userGuess}")
-            _gameState.update {
-                currentState -> currentState.copy(isGuessedWordWrong = true)
-            }
-        }
-
-        updateUserGuess("")
+//        val expected = _gameState.value.levelData.wordPairs[0].original
+//        if (userGuess.equals(expected, ignoreCase = true)) {
+//            // log that guess was true
+//            Log.d("GameViewModel", "User guess was correct, expected: ${expected}, actual: ${userGuess}")
+//        } else {
+//            Log.d("GameViewModel", "User guess was correct, expected: ${expected}, actual: ${userGuess}")
+//            _gameState.update {
+//                currentState -> currentState.copy(isGuessedWordWrong = true)
+//            }
+//        }
+//
+//        updateUserGuess("")
     }
 
 
     fun  onInputChanged(wordIdx: Int, input: String) {
-        val currentInputs = _gameState.value.currentInputs
-        currentInputs[wordIdx] = input
-        _gameState.value = _gameState.value.copy(currentInputs = currentInputs)
+//        val currentInputs = _gameState.value.currentInputs
+//        currentInputs[wordIdx] = input
+//        _gameState.value = _gameState.value.copy(currentInputs = currentInputs)
     }
 
     fun onSubmitClicked() {
-        val currentInputs = _gameState.value.currentInputs
-        val solvedWords = _gameState.value.levelData.wordPairs
-        var isLevelSolved = true
-        for (i in currentInputs.indices) {
-            if (currentInputs[i] != solvedWords[i].original) {
-                isLevelSolved = false
-                break
-            }
-        }
-
-        if (isLevelSolved) {
-            val levelData = _gameState.value.levelData
-            levelData.completed = true
-            _gameState.update { currentState ->
-                currentState.copy(levelData = levelData
-                )
-            }
-            // TODO show success popup message
-            // TODO add logic to go to next level
-        } else {
-            // TODO Show error message
-        }
+//        val currentInputs = _gameState.value.currentInputs
+//        val solvedWords = _gameState.value.levelData.wordPairs
+//        var isLevelSolved = true
+//        for (i in currentInputs.indices) {
+//            if (currentInputs[i] != solvedWords[i].original) {
+//                isLevelSolved = false
+//                break
+//            }
+//        }
+//
+//        if (isLevelSolved) {
+//            val levelData = _gameState.value.levelData
+//            levelData.completed = true
+//            _gameState.update { currentState ->
+//                currentState.copy(levelData = levelData
+//                )
+//            }
+//            // TODO show success popup message
+//            // TODO add logic to go to next level
+//        } else {
+//            // TODO Show error message
+//        }
     }
 
 }
