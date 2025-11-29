@@ -4,20 +4,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.prem.scramble.data.GameData
-import com.prem.scramble.data.UserGameData
 import com.prem.scramble.data.UserLevelData
 import com.prem.scramble.data.levelData1
-import com.prem.scramble.data.levelData2
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class GameViewModel: ViewModel() {
 
     // Backing property to avoid state updates from other classes
-    private val _gameState = MutableStateFlow(GameUIState())
-    val gameState: StateFlow<GameUIState> = _gameState.asStateFlow() // gameState is read-only copy of _gameState
+    private val _gameState = MutableStateFlow(GameUILevelState())
+    val gameState: StateFlow<GameUILevelState> = _gameState.asStateFlow() // gameState is read-only copy of _gameState
 
     var userGuess by mutableStateOf("")
         private set
@@ -30,7 +28,6 @@ class GameViewModel: ViewModel() {
     private fun resetGame() {
 
         // init the game state
-        val staticGameData = GameData(listOf(levelData1, levelData2))
         val userLevelData = UserLevelData(
             levelId = 1,
             levelData = levelData1,
@@ -38,38 +35,13 @@ class GameViewModel: ViewModel() {
             riddleAnswer = "",
             isLevelSolved = false
         )
-        val staticUserGameData = UserGameData(
-            allUserLevelData = listOf(userLevelData),
-            totalCompletedLevels = 0,
-            currentLevel = 0,
+        _gameState.value = GameUILevelState(
+            currentLevel = 1,
+            levelData = levelData1,
+            userLevelData = userLevelData
         )
-
-        _gameState.value = GameUIState(
-            gameData = staticGameData,
-            userGameData = staticUserGameData,
-        )
-
-
-//            // When the ViewModel is created, load the user's progress
-//            viewModelScope.launch {
-//                val loadedUserData = repository.loadUserGameData()
-//
-//                // Assume you have a way to load static GameData too
-//                val staticGameData = loadStaticGameData() // from assets, etc.
-//
-//                _uiState.value = GameUiState(
-//                    totalGameData = TotalGameData(
-//                        originalGameData = staticGameData,
-//                        userData = loadedUserData
-//                    ),
-//                    //... other initial state
-//                )
-//            }
 
     }
-
-
-
 
     fun updateUserGuess(input: String) {
 //        onInputChanged(0, input)
@@ -93,10 +65,17 @@ class GameViewModel: ViewModel() {
 
 
     fun  onInputChanged(wordIdx: Int, input: String) {
-//        val currentInputs = _gameState.value.currentInputs
-//        currentInputs[wordIdx] = input
-//        _gameState.value = _gameState.value.copy(currentInputs = currentInputs)
+        _gameState.update { currentState ->
+            val newPuzzles = currentState.userLevelData.puzzles.toMutableList()
+            newPuzzles[wordIdx] = input
+            currentState.copy(
+                userLevelData = currentState.userLevelData.copy(
+                    puzzles = newPuzzles.toList()
+                )
+            )
+        }
     }
+
 
     fun onSubmitClicked() {
 //        val currentInputs = _gameState.value.currentInputs

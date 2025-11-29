@@ -49,8 +49,8 @@ fun GameScreen(
 
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
 
-    val level1GameData = gameUiState.gameData.levelsData.get(0)
-    val level1UserData = gameUiState.userGameData.allUserLevelData.get(0)
+    val levelData = gameUiState.levelData
+    val levelUserData = gameUiState.userLevelData
 
     Column(
         modifier = Modifier
@@ -67,30 +67,10 @@ fun GameScreen(
             style = typography.titleLarge,
         )
 
-//        GameLayout(
-//            currentScrambledWord = currentScrambledWord,
-//            userGuess = gameViewModel.userGuess,
-//            onUserGuessChanged = {gameViewModel.updateUserGuess(it)},
-//            onKeyboardDone = { gameViewModel.checkUserGuess()},
-//            isGuessWrong = gameUiState.isGuessedWordWrong,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .wrapContentHeight()
-//                .padding(mediumPadding)
-//        )
-
-//        for ((index, word) in words.withIndex()) {
-//            WordLayout(
-//                modifier = Modifier,
-//                scrambledWord = word.scrambled,
-//                userGuess = gameViewModel.userGuess,
-//                userGuessChanged = {gameViewModel.onInputChanged(index, it)})
-//        }
-
             // fori loop in kotlin
         for ( wordIdx in 0..3) {
-            val scrambledWord = level1GameData.puzzles.get(wordIdx).scrambledWord
-            val userGuess = level1UserData.puzzles.get(wordIdx)
+            val scrambledWord = levelData.puzzles.get(wordIdx).scrambledWord
+            val userGuess = levelUserData.puzzles.get(wordIdx)
             WordLayout(
                 modifier = Modifier,
                 scrambledWord = scrambledWord,
