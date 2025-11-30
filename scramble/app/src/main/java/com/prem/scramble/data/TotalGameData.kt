@@ -23,7 +23,7 @@ data class ScrambledPuzzle(
 )
 
 data class UnscrambledPuzzle(
-    val wordLength: Int,
+    val wordLength: Int,  // TODO do we need this?
     val unscrambledWord: String,
     val circledPositions: List<Int>, // do we really need this?
 )
@@ -37,10 +37,16 @@ data class UserGameData(
     val currentLevel: Int,
 )
 
+data class PuzzleInput (
+    val puzzle: String = "",
+    val isCorrect: Boolean = false
+)
+
 data class UserLevelData(
     val levelId: Int,
     val levelData: LevelData, // pointer to original LevelData (should we keep a clone here)
-    val puzzles: List<String>,
+//    val puzzles: List<String>, // TODO better name?
+    val puzzleInputs: List<PuzzleInput>,
     val riddleAnswer: String,
     val isLevelSolved: Boolean,
 )

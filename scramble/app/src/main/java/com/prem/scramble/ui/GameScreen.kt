@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
@@ -63,19 +64,24 @@ fun GameScreen(
     ) {
 
         Text(
-            text = "unscramble",
+            text = "UNSCRAMBLE",
             style = typography.titleLarge,
         )
+
+        // add a line separator
+
 
             // fori loop in kotlin
         for ( wordIdx in 0..3) {
             val scrambledWord = levelData.puzzles.get(wordIdx).scrambledWord
-            val userGuess = levelUserData.puzzles.get(wordIdx)
+            val userGuess = levelUserData.puzzleInputs[wordIdx].puzzle
+            val isGuessRight = levelUserData.puzzleInputs[wordIdx].isCorrect
             WordLayout(
                 modifier = Modifier,
                 scrambledWord = scrambledWord,
                 userGuess = userGuess,
-                userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)}
+                userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)},
+                isGuessRight
             )
         }
 
@@ -91,7 +97,7 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 onClick = {
-                    gameViewModel.checkUserGuess()
+                    gameViewModel.onSubmitClicked()
                 }
             ) {
                 Text(
@@ -101,18 +107,25 @@ fun GameScreen(
             }
         }
 
-        GameStatus(score = 0, modifier = Modifier.padding(20.dp))
+        GameStatus(modifier = Modifier.padding(20.dp), levelUserData.isLevelSolved)
 
     }
 }
 
 @Composable
-fun GameStatus(score: Int, modifier: Modifier = Modifier) {
+fun GameStatus(modifier: Modifier = Modifier, isSolved: Boolean = false) {
+    val solvedStatus : String
+    if (isSolved) {
+        solvedStatus = "Level Complete"
+    } else {
+        solvedStatus = "Level Incomplete"
+    }
+
     Card(
         modifier = modifier
     ) {
         Text(
-            text = "score",
+            text = solvedStatus,
             style = typography.headlineMedium,
             modifier = Modifier.padding(8.dp)
         )
@@ -196,7 +209,8 @@ fun WordLayout(
     modifier: Modifier = Modifier,
     scrambledWord: String,
     userGuess: String,
-    userGuessChanged: (String) -> Unit) {
+    userGuessChanged: (String) -> Unit,
+    isGuessRight: Boolean = false) {
     // row with scrambled words, actual word + icon for right/wrong/unanswered
 
     Row (
@@ -220,11 +234,20 @@ fun WordLayout(
             colors = TextFieldDefaults.colors(),
             shape = shapes.medium
         )
-        Icon(
-            imageVector = Icons.Filled.Close,
-            contentDescription = "wrong",
-            modifier = Modifier.weight(0.1f)
-        )
+        if (!isGuessRight) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "wrong",
+                modifier = Modifier.weight(0.1f)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.Done,
+                contentDescription = "right",
+                modifier = Modifier.weight(0.1f)
+            )
+        }
+
     }
 }
 
