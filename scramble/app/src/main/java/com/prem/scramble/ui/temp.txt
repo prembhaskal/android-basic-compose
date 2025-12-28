@@ -1,0 +1,287 @@
+@Composable
+fun ScramblePuzzleScreen(modifier: Modifier = Modifier) {
+Column(
+modifier = modifier
+.fillMaxSize()
+.background(Color(0xFFF5F5F5))
+.padding(16.dp),
+horizontalAlignment = Alignment.CenterHorizontally
+) {
+// Title
+Box(
+modifier = Modifier
+.background(
+Color(0xFF4CAF50),
+RoundedCornerShape(4.dp)
+)
+.padding(horizontal = 16.dp, vertical = 8.dp)
+) {
+Text(
+text = "SCRAMBLE",
+color = Color.White,
+fontSize = 20.sp,
+fontWeight = FontWeight.Bold
+)
+}
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Instructions
+        Text(
+            text = "Rearrange the letters in the four word jumbles, one letter to each square/circle, to make four ordinary words",
+            fontSize = 14.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Word puzzles
+        val puzzles = listOf(
+            ScrambleWord("DMAEE", listOf(0, 2, 4), "NAMED"),
+            ScrambleWord("EANNS", listOf(1, 2, 3, 4), "SNANE"),
+            ScrambleWord("NRUCCH", listOf(0, 5), "CRUNCH"),
+            ScrambleWord("AELGGH", listOf(0, 2, 3), "LEAGUE")
+        )
+
+        puzzles.forEach { puzzle ->
+            ScrambleWordRow(
+                scrambledWord = puzzle.scrambledWord,
+                circlePositions = puzzle.circlePositions,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // How to play section
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            // Left side - Instructions
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "HOW TO PLAY",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF6A1B9A)
+                )
+                Text(
+                    text = "Now arrange the letters in the circles to form the answer to the riddle or to fill in the missing word as indicated",
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Right side - Quote
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "_____ occurs in direct proportion to dissatisfaction, but dissatisfaction never _____.",
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                        .padding(8.dp)
+                )
+                Text(
+                    text = "- Douglas Horton (6,.,7)",
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(top = 4.dp),
+                    textAlign = TextAlign.End
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ScrambleWordRow(
+scrambledWord: String,
+circlePositions: List<Int>,
+modifier: Modifier = Modifier
+) {
+Row(
+modifier = modifier.fillMaxWidth(),
+horizontalArrangement = Arrangement.Start,
+verticalAlignment = Alignment.CenterVertically
+) {
+// Scrambled word label
+Text(
+text = scrambledWord,
+fontSize = 18.sp,
+fontWeight = FontWeight.Bold,
+modifier = Modifier.width(80.dp)
+)
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // Answer boxes
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            scrambledWord.forEachIndexed { index, _ ->
+                LetterBox(
+                    isCircle = circlePositions.contains(index),
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun LetterBox(
+isCircle: Boolean,
+modifier: Modifier = Modifier
+) {
+Box(
+modifier = modifier
+.then(
+if (isCircle) {
+Modifier
+.border(2.dp, Color.Black, CircleShape)
+.background(Color.White, CircleShape)
+} else {
+Modifier
+.border(2.dp, Color.Black, RectangleShape)
+.background(Color.White, RectangleShape)
+}
+),
+contentAlignment = Alignment.Center
+) {
+// Empty box for now - you can add letters here when implementing the game logic
+}
+}
+
+data class ScrambleWord(
+val scrambledWord: String,
+val circlePositions: List<Int>,
+val answer: String
+)
+
+// Preview
+@Preview(showBackground = true)
+@Composable
+fun ScramblePuzzlePreview() {
+ScramblePuzzleScreen()
+}
+
+// using hidden text field
+@Composable
+fun ScrambleWordRow(
+    scrambledWord: String,
+    circlePositions: List<Int>,
+    userAnswer: String,
+    onAnswerChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable {
+                // Click anywhere on row to focus
+                focusRequester.requestFocus()
+            },
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Scrambled word label
+        Text(
+            text = scrambledWord,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(80.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // This is the key part - overlay approach
+        Box {
+            // Visual letter boxes (non-interactive)
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                repeat(scrambledWord.length) { index ->
+                    LetterDisplayBox(
+                        isCircle = circlePositions.contains(index),
+                        letter = userAnswer.getOrNull(index)?.toString() ?: "",
+                        isFocused = isFocused,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            // Hidden text field that captures all input
+            BasicTextField(
+                value = userAnswer,
+                onValueChange = { newValue ->
+                    // Limit to word length and convert to uppercase
+                    if (newValue.length <= scrambledWord.length) {
+                        onAnswerChange(newValue.uppercase())
+                    }
+                },
+                textStyle = TextStyle(
+                    color = Color.Transparent, // Make text invisible
+                    fontSize = 1.sp
+                ),
+                cursorBrush = SolidColor(Color.Transparent), // Hide cursor
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    capitalization = KeyboardCapitalization.Characters
+                ),
+                onTextLayout = { },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { isFocused = it.isFocused }
+            )
+        }
+    }
+}
+
+@Composable
+fun LetterDisplayBox(
+    isCircle: Boolean,
+    letter: String,
+    isFocused: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .then(
+                if (isCircle) {
+                    Modifier
+                        .border(
+                            width = if (isFocused) 3.dp else 2.dp,
+                            color = if (isFocused) Color.Blue else Color.Black,
+                            shape = CircleShape
+                        )
+                        .background(Color.White, CircleShape)
+                } else {
+                    Modifier
+                        .border(
+                            width = if (isFocused) 3.dp else 2.dp,
+                            color = if (isFocused) Color.Blue else Color.Black,
+                            shape = RectangleShape
+                        )
+                        .background(Color.White, RectangleShape)
+                }
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = letter,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+    }
+}

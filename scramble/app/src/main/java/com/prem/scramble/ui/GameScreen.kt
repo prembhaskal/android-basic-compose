@@ -1,14 +1,23 @@
 package com.prem.scramble.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -18,6 +27,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.MaterialTheme.typography
@@ -27,14 +37,29 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -76,13 +101,28 @@ fun GameScreen(
             val scrambledWord = levelData.puzzles.get(wordIdx).scrambledWord
             val userGuess = levelUserData.puzzleInputs[wordIdx].puzzle
             val isGuessRight = levelUserData.puzzleInputs[wordIdx].isCorrect
-            WordLayout(
+//            WordLayout(
+//                modifier = Modifier,
+//                scrambledWord = scrambledWord,
+//                userGuess = userGuess,
+//                userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)},
+//                isGuessRight
+//            )
+            WordLayout2(
                 modifier = Modifier,
                 scrambledWord = scrambledWord,
                 userGuess = userGuess,
                 userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)},
                 isGuessRight
             )
+//            ScrambleWordRow(
+//                modifier = Modifier,
+//                scrambledWord = scrambledWord,
+//                circlePositions = levelData.puzzles.get(wordIdx).circledPositions,
+//                userAnswer = levelUserData.puzzleInputs[wordIdx].puzzle,
+//                onAnswerChange = { gameViewModel.onInputChanged(wordIdx, it) }
+//                )
+
         }
 
 
@@ -250,6 +290,245 @@ fun WordLayout(
 
     }
 }
+
+@Composable
+fun WordLayout2(
+    modifier: Modifier = Modifier,
+    scrambledWord: String,
+    userGuess: String,
+    userGuessChanged: (String) -> Unit,
+    isGuessRight: Boolean = false) {
+    // row with scrambled words, actual word + icon for right/wrong/unanswered
+
+    Row (
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Text(
+            text = scrambledWord,
+            fontSize = 24.sp,
+            modifier = Modifier.weight(0.4f)
+        )
+//        OutlinedTextField(
+//            value = userGuess,
+//            onValueChange = userGuessChanged,
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .weight(0.5f),
+//            singleLine = true,
+//            label = { Text("fill it") },
+//            colors = TextFieldDefaults.colors(),
+//            shape = shapes.medium
+//        )
+        ScrambleRowInput(
+            cellCount = scrambledWord.length,
+            circledIndices = listOf(1, 2),
+            value = userGuess,
+            onValueChange = userGuessChanged,
+            stroke = 1.dp,
+        )
+        if (!isGuessRight) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "wrong",
+                modifier = Modifier.weight(0.1f)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.Done,
+                contentDescription = "right",
+                modifier = Modifier.weight(0.1f)
+            )
+        }
+
+    }
+}
+
+@Composable
+fun ScrambleWordRow(
+    modifier: Modifier = Modifier,
+    scrambledWord: String,
+    circlePositions: List<Int>,
+    userAnswer: String,
+    onAnswerChange: (String) -> Unit,
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable {
+                // Click anywhere on row to focus
+                focusRequester.requestFocus()
+            },
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Scrambled word label
+        Text(
+            text = scrambledWord,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(80.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // This is the key part - overlay approach
+        Box {
+            // Visual letter boxes (non-interactive)
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                repeat(scrambledWord.length) { index ->
+                    LetterDisplayBox(
+                        isCircle = circlePositions.contains(index),
+                        letter = userAnswer.getOrNull(index)?.toString() ?: "",
+                        isFocused = isFocused,
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+            }
+
+            // Hidden text field that captures all input
+            BasicTextField(
+                value = userAnswer,
+                onValueChange = { newValue ->
+                    // Limit to word length and convert to uppercase
+                    if (newValue.length <= scrambledWord.length) {
+                        onAnswerChange(newValue.uppercase())
+                    }
+                },
+                textStyle = TextStyle(
+                    color = Color.Transparent, // Make text invisible
+                    fontSize = 1.sp
+                ),
+                cursorBrush = SolidColor(Color.Transparent), // Hide cursor
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    capitalization = KeyboardCapitalization.Characters
+                ),
+                onTextLayout = { },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { isFocused = it.isFocused }
+            )
+        }
+    }
+}
+
+
+@Composable
+fun LetterDisplayBox(
+    isCircle: Boolean,
+    letter: String,
+    isFocused: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .then(
+                if (isCircle) {
+                    Modifier
+                        .border(
+                            width = if (isFocused) 3.dp else 2.dp,
+                            color = if (isFocused) Color.Blue else Color.Black,
+                            shape = CircleShape
+                        )
+                        .background(Color.White, CircleShape)
+                }
+                else {
+                    Modifier
+                        .border(
+                            width = if (isFocused) 3.dp else 2.dp,
+                            color = if (isFocused) Color.Blue else Color.Black,
+                            shape = RectangleShape
+                        )
+                        .background(Color.White, RectangleShape)
+                }
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = letter,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+    }
+}
+
+@Composable
+fun ScrambleRowInput(
+    cellCount: Int,
+    circledIndices: List<Int>,
+    value: String,
+    onValueChange: (String) -> Unit,
+    cellSize: Dp = 44.dp,
+    stroke: Dp = 2.dp,
+) {
+    val maxLen = cellCount
+
+    BasicTextField(
+        value = value,
+        onValueChange = { new ->
+            // keep only letters, upper-case, and limit length
+            val filtered = new
+                .filter { it.isLetter() }
+                .uppercase()
+                .take(maxLen)
+            onValueChange(filtered)
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Characters,
+            keyboardType = KeyboardType.Ascii
+        ),
+        cursorBrush = SolidColor(Color.Transparent), // optional: hide default cursor
+        decorationBox = { innerTextField ->
+            // We still need the inner field so IME works, but we visually render cells.
+            Box {
+                Row {
+                    repeat(cellCount) { i ->
+                        val ch = value.getOrNull(i)?.toString().orEmpty()
+
+                        Box(
+                            modifier = Modifier
+                                .size(cellSize)
+                                .border(stroke, Color.Black),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (i in circledIndices) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(4.dp)
+                                        .border(stroke, Color.Black, CircleShape)
+                                )
+                            }
+                            Text(
+                                text = ch,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                    }
+                }
+
+                // Keep the real text field layered on top (or behind) to capture input.
+                // Make it invisible but focusable/clickable.
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .alpha(0.01f) // "invisible" but still receives touch/IME
+                ) {
+                    innerTextField()
+                }
+            }
+        }
+    )
+}
+
 
 @Preview(showBackground = true)
 @Composable
