@@ -122,9 +122,11 @@ fun GameScreen(
 //                userAnswer = levelUserData.puzzleInputs[wordIdx].puzzle,
 //                onAnswerChange = { gameViewModel.onInputChanged(wordIdx, it) }
 //                )
-
         }
 
+        RiddleSection(
+            modifier = Modifier.padding(top = mediumPadding)
+        )
 
         Column(
             modifier = Modifier
@@ -529,6 +531,57 @@ fun ScrambleRowInput(
     )
 }
 
+@Composable
+fun RiddleSection(modifier: Modifier = Modifier) {
+    // 2 columns
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // first column
+        Column(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.weight(1f),
+        ) {
+            // 3 rows
+            Row() {Text ("HOW TO PLAY")}
+            Row() {Text( "......................")}
+            Row() {Text("Now arrange  the letters in the circles to form the answer to the " +
+                    "riddle or to fill in the missing word as indicated")}
+
+        }
+
+        // 2nd column
+        Column(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.weight(1f),
+        ) {
+            // rectangle enclosing the texxt
+            Row() {
+                Box(
+                    modifier = Modifier
+                        .border(width = 1.dp, color = Color.Black)
+                        .background(Color.White)
+                        .padding(16.dp)
+                ) {
+                    Text("----- occurs in direct proportion to dissatisfaction," +
+                            "but dissatisfaction never ------.\n" +
+                            "   - Douglous Horton (6,.,7")
+                }
+            }
+        }
+    }
+
+    OutlinedTextField(
+        value = "",
+        onValueChange = {},
+        label = { Text("word1") },
+        modifier = Modifier.fillMaxWidth()
+            .padding(top = 8.dp),
+        singleLine = true
+    )
+}
 
 @Preview(showBackground = true)
 @Composable
