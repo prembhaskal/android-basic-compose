@@ -13,7 +13,7 @@ data class LevelData(
     val puzzles: List<ScrambledPuzzle>,
     val riddle: String,
     val puzzleAnswers: List<UnscrambledPuzzle>,
-    val riddleAnswer: String,
+    val riddleAnswers: List<String>,
 )
 
 data class ScrambledPuzzle(
@@ -47,6 +47,6 @@ data class UserLevelData(
     val levelData: LevelData, // pointer to original LevelData (should we keep a clone here)
 //    val puzzles: List<String>, // TODO better name?
     val puzzleInputs: List<PuzzleInput>,
-    val riddleAnswer: String,
+    val riddleAnswers: List<String>,
     val isLevelSolved: Boolean,
 )

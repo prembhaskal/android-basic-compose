@@ -5,12 +5,13 @@ import androidx.compose.runtime.mutableStateListOf
 class Riddle(
     val parts: List<RiddlePart>,
     val attribution: String,
+    val riddle : String,
     private val onStringChange: (String) -> Unit
 ) {
     // Track answers for each blank
     private val answers = mutableStateListOf<String>().apply {
         // Initialize with empty strings for each blank
-        repeat(parts.count { it is RiddlePart.Blank }) { add("") }
+        repeat(parts.count { it.wordType == WordType.BLANK }) { add("") }
     }
 
     // Get current answer for a blank by index
@@ -28,11 +29,12 @@ class Riddle(
     fun buildFullString(): String = buildString {
         var blankIdx = 0
         parts.forEach { part ->
-            when (part) {
-                is RiddlePart.Text -> append(part.content)
-                is RiddlePart.Blank -> {
+            when (part.wordType) {
+                WordType.TEXT -> append(part.word)
+                WordType.BLANK -> {
                     val answer = answers.getOrElse(blankIdx) { "" }
-                    append(answer.ifEmpty { "_".repeat(part.length) })
+                    // For BLANK parts, [word] is the placeholder (e.g. "______")
+                    append(answer.ifEmpty { part.word })
                     blankIdx++
                 }
             }
@@ -43,8 +45,8 @@ class Riddle(
     fun getBlankLength(blankIndex: Int): Int {
         var idx = 0
         parts.forEach { part ->
-            if (part is RiddlePart.Blank) {
-                if (idx == blankIndex) return part.length
+            if (part.wordType == WordType.BLANK) {
+                if (idx == blankIndex) return part.word.length
                 idx++
             }
         }

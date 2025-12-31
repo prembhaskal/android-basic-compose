@@ -30,11 +30,12 @@ class GameViewModel: ViewModel() {
     private fun resetGame() {
 
         // init the game state
+        val initialRiddleAnswers = List(levelData1.riddleAnswers.size) { "" }
         val userLevelData = UserLevelData(
             levelId = 1,
             levelData = levelData1,
             puzzleInputs = MutableList(4) { PuzzleInput("", false) },
-            riddleAnswer = "",
+            riddleAnswers = initialRiddleAnswers,
             isLevelSolved = false
         )
         _gameState.value = GameUILevelState(
@@ -59,6 +60,28 @@ class GameViewModel: ViewModel() {
             currentState.copy(
                 userLevelData = currentState.userLevelData.copy(
                     puzzleInputs = newPuzzlesInputs.toList()
+                )
+            )
+        }
+    }
+
+    fun onRiddleAnswerChanged(blankIdx: Int, input: String) {
+        val levelData = _gameState.value.levelData
+        val maxLen = levelData.riddleAnswers.getOrNull(blankIdx)?.length ?: return
+
+        if (maxLen < input.length) return
+        if (!input.all { it.isLetter() }) return
+
+        val normalized = input.uppercase()
+
+        _gameState.update { currentState ->
+            val newRiddleAnswers = currentState.userLevelData.riddleAnswers.toMutableList()
+            if (blankIdx !in newRiddleAnswers.indices) return@update currentState
+
+            newRiddleAnswers[blankIdx] = normalized
+            currentState.copy(
+                userLevelData = currentState.userLevelData.copy(
+                    riddleAnswers = newRiddleAnswers.toList()
                 )
             )
         }

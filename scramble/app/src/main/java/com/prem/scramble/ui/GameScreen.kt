@@ -125,6 +125,13 @@ fun GameScreen(
         }
 
         RiddleSection(
+            riddleParts = gameUiState.riddleParts,
+            filledRiddleParts = gameUiState.filledRiddleParts,
+            userRiddleAnswers = levelUserData.riddleAnswers,
+            expectedRiddleAnswers = levelData.riddleAnswers,
+            onRiddleAnswerChange = { blankIdx, value ->
+                gameViewModel.onRiddleAnswerChanged(blankIdx, value)
+            },
             modifier = Modifier.padding(top = mediumPadding)
         )
 
@@ -309,20 +316,9 @@ fun WordLayout2(
     ){
         Text(
             text = scrambledWord,
-            fontSize = 24.sp,
+            fontSize = 20.sp,
             modifier = Modifier.weight(0.4f)
         )
-//        OutlinedTextField(
-//            value = userGuess,
-//            onValueChange = userGuessChanged,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .weight(0.5f),
-//            singleLine = true,
-//            label = { Text("fill it") },
-//            colors = TextFieldDefaults.colors(),
-//            shape = shapes.medium
-//        )
         ScrambleRowInput(
             cellCount = scrambledWord.length,
             circledIndices = listOf(1, 2),
@@ -532,7 +528,14 @@ fun ScrambleRowInput(
 }
 
 @Composable
-fun RiddleSection(modifier: Modifier = Modifier) {
+fun RiddleSection(
+    riddleParts: List<RiddlePart>,
+    filledRiddleParts: List<RiddlePart>,
+    userRiddleAnswers: List<String>,
+    expectedRiddleAnswers: List<String>,
+    onRiddleAnswerChange: (blankIdx: Int, value: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     // 2 columns
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -544,12 +547,9 @@ fun RiddleSection(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Top,
             modifier = Modifier.weight(1f),
         ) {
-            // 3 rows
-            Row() {Text ("HOW TO PLAY")}
-            Row() {Text( "......................")}
-            Row() {Text("Now arrange  the letters in the circles to form the answer to the " +
-                    "riddle or to fill in the missing word as indicated")}
-
+            Text (text = "HOW TO PLAY", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Blue)
+            Text("Now arrange  the letters in the circles to form the answer to the " +
+                    "riddle or to fill in the missing word as indicated")
         }
 
         // 2nd column
@@ -558,29 +558,48 @@ fun RiddleSection(modifier: Modifier = Modifier) {
             modifier = Modifier.weight(1f),
         ) {
             // rectangle enclosing the texxt
-            Row() {
+            Row(
+                modifier = Modifier.padding(top=16.dp),
+            ) {
                 Box(
                     modifier = Modifier
                         .border(width = 1.dp, color = Color.Black)
                         .background(Color.White)
                         .padding(16.dp)
                 ) {
-                    Text("----- occurs in direct proportion to dissatisfaction," +
-                            "but dissatisfaction never ------.\n" +
-                            "   - Douglous Horton (6,.,7")
+                    val riddleDisplay = filledRiddleParts.joinToString(separator = "") { it.word }
+                    Text(riddleDisplay)
                 }
             }
         }
     }
 
-    OutlinedTextField(
-        value = "",
-        onValueChange = {},
-        label = { Text("word1") },
-        modifier = Modifier.fillMaxWidth()
-            .padding(top = 8.dp),
-        singleLine = true
-    )
+    val blankCount = riddleParts.count { it.wordType == WordType.BLANK }
+
+    for (blankIdx in 0 until blankCount) {
+        val expectedLen = expectedRiddleAnswers.getOrNull(blankIdx)?.length
+            ?: riddleParts.filter { it.wordType == WordType.BLANK }.getOrNull(blankIdx)?.word?.length
+            ?: 0
+
+        val value = userRiddleAnswers.getOrNull(blankIdx).orEmpty()
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = { new ->
+                val cleaned = new
+                    .filter { it.isLetter() }
+                    .uppercase()
+                    .take(expectedLen)
+                onRiddleAnswerChange(blankIdx, cleaned)
+            },
+            label = { Text("Word ${blankIdx + 1} (${expectedLen})") },
+            supportingText = { Text("${value.length}/${expectedLen}") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            singleLine = true
+        )
+    }
 }
 
 @Preview(showBackground = true)
