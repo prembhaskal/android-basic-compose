@@ -2,19 +2,16 @@ package com.prem.scramble.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
@@ -37,22 +34,14 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -101,6 +90,7 @@ fun GameScreen(
             val scrambledWord = levelData.puzzles.get(wordIdx).scrambledWord
             val userGuess = levelUserData.puzzleInputs[wordIdx].puzzle
             val isGuessRight = levelUserData.puzzleInputs[wordIdx].isCorrect
+            val circledIndices = levelData.puzzles.get(wordIdx).circledPositions
 //            WordLayout(
 //                modifier = Modifier,
 //                scrambledWord = scrambledWord,
@@ -112,6 +102,7 @@ fun GameScreen(
                 modifier = Modifier,
                 scrambledWord = scrambledWord,
                 userGuess = userGuess,
+                circledIndices = circledIndices,
                 userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)},
                 isGuessRight
             )
@@ -305,155 +296,56 @@ fun WordLayout2(
     modifier: Modifier = Modifier,
     scrambledWord: String,
     userGuess: String,
+    circledIndices: List<Int>,
     userGuessChanged: (String) -> Unit,
     isGuessRight: Boolean = false) {
     // row with scrambled words, actual word + icon for right/wrong/unanswered
 
     Row (
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ){
-        Text(
-            text = scrambledWord,
-            fontSize = 20.sp,
-            modifier = Modifier.weight(0.4f)
-        )
-        ScrambleRowInput(
-            cellCount = scrambledWord.length,
-            circledIndices = listOf(1, 2),
-            value = userGuess,
-            onValueChange = userGuessChanged,
-            stroke = 1.dp,
-        )
-        if (!isGuessRight) {
-            Icon(
-                imageVector = Icons.Filled.Close,
-                contentDescription = "wrong",
-                modifier = Modifier.weight(0.1f)
-            )
-        } else {
-            Icon(
-                imageVector = Icons.Filled.Done,
-                contentDescription = "right",
-                modifier = Modifier.weight(0.1f)
+        Column(
+//            modifier = Modifier.weight(0.2f),
+//            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = scrambledWord,
+                fontSize = 20.sp,
+//                modifier = Modifier.weight(0.2f)
             )
         }
 
-    }
-}
+        Column(
+//            modifier = Modifier.weight(0.8f),
+//            horizontalAlignment = Alignment.Start
+        ) {
+            ScrambleRowInput(
+                cellCount = scrambledWord.length,
+                circledIndices = circledIndices,
+                value = userGuess,
+                onValueChange = userGuessChanged,
+                stroke = 1.dp,
+            )
+        }
 
-@Composable
-fun ScrambleWordRow(
-    modifier: Modifier = Modifier,
-    scrambledWord: String,
-    circlePositions: List<Int>,
-    userAnswer: String,
-    onAnswerChange: (String) -> Unit,
-) {
-    var isFocused by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable {
-                // Click anywhere on row to focus
-                focusRequester.requestFocus()
-            },
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Scrambled word label
-        Text(
-            text = scrambledWord,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.width(80.dp)
-        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // This is the key part - overlay approach
-        Box {
-            // Visual letter boxes (non-interactive)
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                repeat(scrambledWord.length) { index ->
-                    LetterDisplayBox(
-                        isCircle = circlePositions.contains(index),
-                        letter = userAnswer.getOrNull(index)?.toString() ?: "",
-                        isFocused = isFocused,
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
+        Column() {
+            if (!isGuessRight) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "wrong",
+//                    modifier = Modifier.weight(0.1f)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Done,
+                    contentDescription = "right",
+//                    modifier = Modifier.weight(0.1f)
+                )
             }
-
-            // Hidden text field that captures all input
-            BasicTextField(
-                value = userAnswer,
-                onValueChange = { newValue ->
-                    // Limit to word length and convert to uppercase
-                    if (newValue.length <= scrambledWord.length) {
-                        onAnswerChange(newValue.uppercase())
-                    }
-                },
-                textStyle = TextStyle(
-                    color = Color.Transparent, // Make text invisible
-                    fontSize = 1.sp
-                ),
-                cursorBrush = SolidColor(Color.Transparent), // Hide cursor
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    capitalization = KeyboardCapitalization.Characters
-                ),
-                onTextLayout = { },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .focusRequester(focusRequester)
-                    .onFocusChanged { isFocused = it.isFocused }
-            )
         }
-    }
-}
 
-
-@Composable
-fun LetterDisplayBox(
-    isCircle: Boolean,
-    letter: String,
-    isFocused: Boolean,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .then(
-                if (isCircle) {
-                    Modifier
-                        .border(
-                            width = if (isFocused) 3.dp else 2.dp,
-                            color = if (isFocused) Color.Blue else Color.Black,
-                            shape = CircleShape
-                        )
-                        .background(Color.White, CircleShape)
-                }
-                else {
-                    Modifier
-                        .border(
-                            width = if (isFocused) 3.dp else 2.dp,
-                            color = if (isFocused) Color.Blue else Color.Black,
-                            shape = RectangleShape
-                        )
-                        .background(Color.White, RectangleShape)
-                }
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = letter,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
     }
 }
 
@@ -463,7 +355,7 @@ fun ScrambleRowInput(
     circledIndices: List<Int>,
     value: String,
     onValueChange: (String) -> Unit,
-    cellSize: Dp = 44.dp,
+    cellSize: Dp = 36.dp,
     stroke: Dp = 2.dp,
 ) {
     val maxLen = cellCount
@@ -501,7 +393,7 @@ fun ScrambleRowInput(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .padding(4.dp)
+                                        .padding(1.dp)
                                         .border(stroke, Color.Black, CircleShape)
                                 )
                             }
@@ -548,8 +440,7 @@ fun RiddleSection(
             modifier = Modifier.weight(1f),
         ) {
             Text (text = "HOW TO PLAY", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Blue)
-            Text("Now arrange  the letters in the circles to form the answer to the " +
-                    "riddle or to fill in the missing word as indicated")
+            Text("Arrange  the letters in the circles to complete the riddle")
         }
 
         // 2nd column
