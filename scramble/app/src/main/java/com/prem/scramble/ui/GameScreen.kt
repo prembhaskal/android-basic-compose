@@ -1,22 +1,30 @@
 package com.prem.scramble.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.material3.MaterialTheme.typography
@@ -28,12 +36,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,12 +62,10 @@ fun GameScreen(
 
     val gameUiState by gameViewModel.gameState.collectAsState()
 
-    val pair = gameUiState.levelData.wordPairs.get(0)
-    val currentScrambledWord = pair.scrambled
-
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
 
-    val words = gameUiState.levelData.wordPairs
+    val levelData = gameUiState.levelData
+    val levelUserData = gameUiState.userLevelData
 
     Column(
         modifier = Modifier
@@ -65,29 +78,53 @@ fun GameScreen(
     ) {
 
         Text(
-            text = "unscramble",
+            text = "UNSCRAMBLE",
             style = typography.titleLarge,
         )
 
-//        GameLayout(
-//            currentScrambledWord = currentScrambledWord,
-//            userGuess = gameViewModel.userGuess,
-//            onUserGuessChanged = {gameViewModel.updateUserGuess(it)},
-//            onKeyboardDone = { gameViewModel.checkUserGuess()},
-//            isGuessWrong = gameUiState.isGuessedWordWrong,
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .wrapContentHeight()
-//                .padding(mediumPadding)
-//        )
+        // add a line separator
 
-        for ((index, word) in words.withIndex()) {
-            WordLayout(
+
+            // fori loop in kotlin
+        for ( wordIdx in 0..3) {
+            val scrambledWord = levelData.puzzles.get(wordIdx).scrambledWord
+            val userGuess = levelUserData.puzzleInputs[wordIdx].puzzle
+            val isGuessRight = levelUserData.puzzleInputs[wordIdx].isCorrect
+            val circledIndices = levelData.puzzles.get(wordIdx).circledPositions
+//            WordLayout(
+//                modifier = Modifier,
+//                scrambledWord = scrambledWord,
+//                userGuess = userGuess,
+//                userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)},
+//                isGuessRight
+//            )
+            WordLayout2(
                 modifier = Modifier,
-                scrambledWord = word.scrambled,
-                userGuess = gameViewModel.userGuess,
-                userGuessChanged = {gameViewModel.onInputChanged(index, it)})
+                scrambledWord = scrambledWord,
+                userGuess = userGuess,
+                circledIndices = circledIndices,
+                userGuessChanged = {gameViewModel.onInputChanged(wordIdx, it)},
+                isGuessRight
+            )
+//            ScrambleWordRow(
+//                modifier = Modifier,
+//                scrambledWord = scrambledWord,
+//                circlePositions = levelData.puzzles.get(wordIdx).circledPositions,
+//                userAnswer = levelUserData.puzzleInputs[wordIdx].puzzle,
+//                onAnswerChange = { gameViewModel.onInputChanged(wordIdx, it) }
+//                )
         }
+
+        RiddleSection(
+            riddleParts = gameUiState.riddleParts,
+            filledRiddleParts = gameUiState.filledRiddleParts,
+            userRiddleAnswers = levelUserData.riddleAnswers,
+            expectedRiddleAnswers = levelData.riddleAnswers,
+            onRiddleAnswerChange = { blankIdx, value ->
+                gameViewModel.onRiddleAnswerChanged(blankIdx, value)
+            },
+            modifier = Modifier.padding(top = mediumPadding)
+        )
 
         Column(
             modifier = Modifier
@@ -100,7 +137,7 @@ fun GameScreen(
                 modifier = Modifier
                     .fillMaxWidth(),
                 onClick = {
-                    gameViewModel.checkUserGuess()
+                    gameViewModel.onSubmitClicked()
                 }
             ) {
                 Text(
@@ -110,24 +147,32 @@ fun GameScreen(
             }
         }
 
-        GameStatus(score = 0, modifier = Modifier.padding(20.dp))
+        GameStatus(modifier = Modifier.padding(20.dp), levelUserData.isLevelSolved)
 
     }
 }
 
 @Composable
-fun GameStatus(score: Int, modifier: Modifier = Modifier) {
+fun GameStatus(modifier: Modifier = Modifier, isSolved: Boolean = false) {
+    val solvedStatus : String
+    if (isSolved) {
+        solvedStatus = "Level Complete"
+    } else {
+        solvedStatus = "Level Incomplete"
+    }
+
     Card(
         modifier = modifier
     ) {
         Text(
-            text = "score",
+            text = solvedStatus,
             style = typography.headlineMedium,
             modifier = Modifier.padding(8.dp)
         )
     }
 }
 
+// unused for now.
 @Composable
 fun GameLayout(
     onUserGuessChanged: (String) -> Unit,
@@ -196,12 +241,16 @@ fun GameLayout(
     }
 }
 
+// WordLayout represents 1 row with scrambledWord on left,
+// then userGuess on its right,
+// then icon for right/wrong/unanswered
 @Composable
 fun WordLayout(
     modifier: Modifier = Modifier,
     scrambledWord: String,
     userGuess: String,
-    userGuessChanged: (String) -> Unit) {
+    userGuessChanged: (String) -> Unit,
+    isGuessRight: Boolean = false) {
     // row with scrambled words, actual word + icon for right/wrong/unanswered
 
     Row (
@@ -225,10 +274,221 @@ fun WordLayout(
             colors = TextFieldDefaults.colors(),
             shape = shapes.medium
         )
-        Icon(
-            imageVector = Icons.Filled.Close,
-            contentDescription = "wrong",
-            modifier = Modifier.weight(0.1f)
+        if (!isGuessRight) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = "wrong",
+                modifier = Modifier.weight(0.1f)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.Done,
+                contentDescription = "right",
+                modifier = Modifier.weight(0.1f)
+            )
+        }
+
+    }
+}
+
+@Composable
+fun WordLayout2(
+    modifier: Modifier = Modifier,
+    scrambledWord: String,
+    userGuess: String,
+    circledIndices: List<Int>,
+    userGuessChanged: (String) -> Unit,
+    isGuessRight: Boolean = false) {
+    // row with scrambled words, actual word + icon for right/wrong/unanswered
+
+    Row (
+        modifier = Modifier.fillMaxWidth().padding(bottom = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Column(
+//            modifier = Modifier.weight(0.2f),
+//            horizontalAlignment = Alignment.Start
+        ) {
+            Text(
+                text = scrambledWord,
+                fontSize = 20.sp,
+//                modifier = Modifier.weight(0.2f)
+            )
+        }
+
+        Column(
+//            modifier = Modifier.weight(0.8f),
+//            horizontalAlignment = Alignment.Start
+        ) {
+            ScrambleRowInput(
+                cellCount = scrambledWord.length,
+                circledIndices = circledIndices,
+                value = userGuess,
+                onValueChange = userGuessChanged,
+                stroke = 1.dp,
+            )
+        }
+
+        Column() {
+            if (!isGuessRight) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "wrong",
+//                    modifier = Modifier.weight(0.1f)
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.Done,
+                    contentDescription = "right",
+//                    modifier = Modifier.weight(0.1f)
+                )
+            }
+        }
+
+    }
+}
+
+@Composable
+fun ScrambleRowInput(
+    cellCount: Int,
+    circledIndices: List<Int>,
+    value: String,
+    onValueChange: (String) -> Unit,
+    cellSize: Dp = 36.dp,
+    stroke: Dp = 2.dp,
+) {
+    val maxLen = cellCount
+
+    BasicTextField(
+        value = value,
+        onValueChange = { new ->
+            // keep only letters, upper-case, and limit length
+            val filtered = new
+                .filter { it.isLetter() }
+                .uppercase()
+                .take(maxLen)
+            onValueChange(filtered)
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Characters,
+            keyboardType = KeyboardType.Ascii
+        ),
+        cursorBrush = SolidColor(Color.Transparent), // optional: hide default cursor
+        decorationBox = { innerTextField ->
+            // We still need the inner field so IME works, but we visually render cells.
+            Box {
+                Row {
+                    repeat(cellCount) { i ->
+                        val ch = value.getOrNull(i)?.toString().orEmpty()
+
+                        Box(
+                            modifier = Modifier
+                                .size(cellSize)
+                                .border(stroke, Color.Black),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (i in circledIndices) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(1.dp)
+                                        .border(stroke, Color.Black, CircleShape)
+                                )
+                            }
+                            Text(
+                                text = ch,
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                        }
+                    }
+                }
+
+                // Keep the real text field layered on top (or behind) to capture input.
+                // Make it invisible but focusable/clickable.
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .alpha(0.01f) // "invisible" but still receives touch/IME
+                ) {
+                    innerTextField()
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun RiddleSection(
+    riddleParts: List<RiddlePart>,
+    filledRiddleParts: List<RiddlePart>,
+    userRiddleAnswers: List<String>,
+    expectedRiddleAnswers: List<String>,
+    onRiddleAnswerChange: (blankIdx: Int, value: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // 2 columns
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // first column
+        Column(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.weight(1f),
+        ) {
+            Text (text = "HOW TO PLAY", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.Blue)
+            Text("Arrange  the letters in the circles to complete the riddle")
+        }
+
+        // 2nd column
+        Column(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.weight(1f),
+        ) {
+            // rectangle enclosing the texxt
+            Row(
+                modifier = Modifier.padding(top=16.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .border(width = 1.dp, color = Color.Black)
+                        .background(Color.White)
+                        .padding(16.dp)
+                ) {
+                    val riddleDisplay = filledRiddleParts.joinToString(separator = "") { it.word }
+                    Text(riddleDisplay)
+                }
+            }
+        }
+    }
+
+    val blankCount = riddleParts.count { it.wordType == WordType.BLANK }
+
+    for (blankIdx in 0 until blankCount) {
+        val expectedLen = expectedRiddleAnswers.getOrNull(blankIdx)?.length
+            ?: riddleParts.filter { it.wordType == WordType.BLANK }.getOrNull(blankIdx)?.word?.length
+            ?: 0
+
+        val value = userRiddleAnswers.getOrNull(blankIdx).orEmpty()
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = { new ->
+                val cleaned = new
+                    .filter { it.isLetter() }
+                    .uppercase()
+                    .take(expectedLen)
+                onRiddleAnswerChange(blankIdx, cleaned)
+            },
+            label = { Text("Word ${blankIdx + 1} (${expectedLen})") },
+            supportingText = { Text("${value.length}/${expectedLen}") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            singleLine = true
         )
     }
 }

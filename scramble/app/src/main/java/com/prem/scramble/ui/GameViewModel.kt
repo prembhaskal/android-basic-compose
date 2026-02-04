@@ -5,7 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.prem.scramble.data.gameLevelsData
+import com.prem.scramble.data.PuzzleInput
+import com.prem.scramble.data.UserLevelData
+import com.prem.scramble.data.levelData1
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,8 +16,8 @@ import kotlinx.coroutines.flow.update
 class GameViewModel: ViewModel() {
 
     // Backing property to avoid state updates from other classes
-    private val _gameState = MutableStateFlow(GameUIState())
-    val gameState: StateFlow<GameUIState> = _gameState.asStateFlow() // gameState is read-only copy of _gameState
+    private val _gameState = MutableStateFlow(GameUILevelState())
+    val gameState: StateFlow<GameUILevelState> = _gameState.asStateFlow() // gameState is read-only copy of _gameState
 
     var userGuess by mutableStateOf("")
         private set
@@ -26,63 +28,125 @@ class GameViewModel: ViewModel() {
     }
 
     private fun resetGame() {
-        val level = gameLevelsData[0]
-        _gameState.value = GameUIState(
-            currentLevel = 1,
-            levelData = level
+
+        // init the game state
+        val initialRiddleAnswers = List(levelData1.riddleAnswers.size) { "" }
+        val userLevelData = UserLevelData(
+            levelId = 1,
+            levelData = levelData1,
+            puzzleInputs = MutableList(4) { PuzzleInput("", false) },
+            riddleAnswers = initialRiddleAnswers,
+            isLevelSolved = false
         )
+        _gameState.value = GameUILevelState(
+            currentLevel = 1,
+            levelData = levelData1,
+            userLevelData = userLevelData
+        )
+
     }
-
-
-    fun updateUserGuess(input: String) {
-//        onInputChanged(0, input)
-        userGuess = input
-    }
-
-    fun checkUserGuess() {
-        val expected = _gameState.value.levelData.wordPairs[0].original
-        if (userGuess.equals(expected, ignoreCase = true)) {
-            // log that guess was true
-            Log.d("GameViewModel", "User guess was correct, expected: ${expected}, actual: ${userGuess}")
-        } else {
-            Log.d("GameViewModel", "User guess was correct, expected: ${expected}, actual: ${userGuess}")
-            _gameState.update {
-                currentState -> currentState.copy(isGuessedWordWrong = true)
-            }
-        }
-
-        updateUserGuess("")
-    }
-
 
     fun  onInputChanged(wordIdx: Int, input: String) {
-        val currentInputs = _gameState.value.currentInputs
-        currentInputs[wordIdx] = input
-        _gameState.value = _gameState.value.copy(currentInputs = currentInputs)
+        if (!isValidInput(wordIdx, input)) {
+            return
+        }
+        val inputupper = input.uppercase()
+        _gameState.update { currentState ->
+            val newPuzzlesInputs = currentState.userLevelData.puzzleInputs.toMutableList()
+            val puzzleInput = PuzzleInput(inputupper, false)
+            val updatedPuzzleInput = updatePuzzleStatus(wordIdx, puzzleInput)
+            newPuzzlesInputs[wordIdx] =  updatedPuzzleInput
+
+            currentState.copy(
+                userLevelData = currentState.userLevelData.copy(
+                    puzzleInputs = newPuzzlesInputs.toList()
+                )
+            )
+        }
+    }
+
+    fun onRiddleAnswerChanged(blankIdx: Int, input: String) {
+        val levelData = _gameState.value.levelData
+        val maxLen = levelData.riddleAnswers.getOrNull(blankIdx)?.length ?: return
+
+        if (maxLen < input.length) return
+        if (!input.all { it.isLetter() }) return
+
+        val normalized = input.uppercase()
+
+        _gameState.update { currentState ->
+            val newRiddleAnswers = currentState.userLevelData.riddleAnswers.toMutableList()
+            if (blankIdx !in newRiddleAnswers.indices) return@update currentState
+
+            newRiddleAnswers[blankIdx] = normalized
+            currentState.copy(
+                userLevelData = currentState.userLevelData.copy(
+                    riddleAnswers = newRiddleAnswers.toList()
+                )
+            )
+        }
+    }
+
+    fun updatePuzzleStatus(wordIdx: Int, input: PuzzleInput): PuzzleInput {
+        val levelData = _gameState.value.levelData
+        val expPuzzleAnswer = levelData.puzzleAnswers[wordIdx].unscrambledWord
+        if (input.puzzle == expPuzzleAnswer) {
+            return input.copy(
+                isCorrect = true
+            )
+        }
+
+        return input
+    }
+
+    // doValidationsOnInput does basic validation
+    // - length not exceeding input scramble
+    // - input is letter in english alphabet
+    fun isValidInput(wordIdx: Int, input: String): Boolean {
+        val userLevelData = _gameState.value.userLevelData
+        val puzzle = userLevelData.levelData.puzzles[wordIdx]
+        val puzzleLength = puzzle.wordLength
+
+        if (puzzleLength < input.length) {
+            return false
+        }
+
+        if (!input.all { it.isLetter() }) {
+            return false
+        }
+
+        return true
     }
 
     fun onSubmitClicked() {
-        val currentInputs = _gameState.value.currentInputs
-        val solvedWords = _gameState.value.levelData.wordPairs
         var isLevelSolved = true
-        for (i in currentInputs.indices) {
-            if (currentInputs[i] != solvedWords[i].original) {
+        val userLevelData = _gameState.value.userLevelData
+
+        val userAnswers = userLevelData.puzzleInputs
+
+        for (userAnswer in userAnswers) {
+            if (!userAnswer.isCorrect) {
                 isLevelSolved = false
                 break
             }
         }
 
         if (isLevelSolved) {
-            val levelData = _gameState.value.levelData
-            levelData.completed = true
             _gameState.update { currentState ->
-                currentState.copy(levelData = levelData
+                currentState.copy(
+                    userLevelData = currentState.userLevelData.copy(
+                        isLevelSolved = true
+                    )
                 )
             }
-            // TODO show success popup message
-            // TODO add logic to go to next level
+
+            // add log that all puzzles are solved
+            Log.d("GameViewModel", "All puzzles are solved")
+
+            // TODO how to show pop up?
+            return
         } else {
-            // TODO Show error message
+            Log.d("GameViewModel", "Not all puzzles are solved")
         }
     }
 
